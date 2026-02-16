@@ -479,10 +479,41 @@ flowchart LR
   - Clerk Dashboard -> Webhooks -> endpoint deliveries show `2xx`.
   - If failing, replay events after fixing config.
 
+#### P3A completion checklist (Convex webhook way)
+
+1. Confirm endpoint URL in Clerk is exactly:
+  - `<NEXT_PUBLIC_CONVEX_SITE_URL>/webhooks/clerk`
+2. Confirm Clerk endpoint events are enabled:
+  - `user.created`, `user.updated`, `user.deleted`
+  - `organization.created`, `organization.updated`, `organization.deleted`
+  - `organizationMembership.created`, `organizationMembership.updated`, `organizationMembership.deleted`
+3. Confirm Convex env is set on the active deployment:
+  - `CLERK_WEBHOOK_SIGNING_SECRET`
+4. Confirm code deploy includes:
+  - `convex/http.ts` route `/webhooks/clerk`
+  - `convex/sync.ts` internal sync mutations
+5. Trigger/replay webhook deliveries from Clerk dashboard and confirm `2xx`.
+6. Verify data landed in Convex tables:
+  - `users`
+  - `companies`
+  - `companyMembers`
+7. Keep billing events out of this pipeline (no billing sync).
+
+#### P3A troubleshooting (quick)
+
+- `400 Invalid webhook signature`:
+  - Secret mismatch; reset `CLERK_WEBHOOK_SIGNING_SECRET` in Convex env to the endpoint secret from Clerk.
+- `404` from Clerk delivery:
+  - Endpoint URL/path is wrong; must end with `/webhooks/clerk`.
+- `500` from Clerk delivery:
+  - Convex env missing or payload handling error; check Convex logs and replay.
+- Deliveries green but no rows:
+  - Verify the specific event types are subscribed, then replay those events.
+
 #### P3B: Identity and org sync
 
 - Sync only user/org/membership lifecycle events into Convex-facing app records.
-- Keep webhook route public in middleware.
+- Webhook ingestion runs on Convex HTTP routes (not Next.js middleware-protected routes).
 
 #### P3C: No billing sync policy
 
@@ -494,6 +525,21 @@ flowchart LR
 - On application decision update (yes/no/reject/advance), create candidate notifications.
 
 ### Phase 4: UI routes and product experience
+
+#### Phase 4 execution protocol (must-follow)
+
+- UI stack for Phase 4 is fixed:
+  - **Tailwind CSS** for styling/layout primitives.
+  - **shadcn/ui** for reusable UI components/patterns.
+- shadcn MCP is initialized for this project with:
+  - `pnpm dlx shadcn@latest mcp init --client cursor`
+- During P4 work, use MCP where it helps:
+  - Browse/search/install shadcn components via MCP instead of ad-hoc copy/paste.
+  - Prefer MCP-assisted component selection for forms, cards, dialogs, tables, and navigation.
+- Execute Phase 4 sequentially, one letter at a time:
+  - Complete and verify **P4A** before starting **P4B**.
+  - Complete and verify **P4B** before starting **P4C**.
+  - Complete and verify **P4C** before starting **P4D**.
 
 #### P4A: Landing page
 
@@ -550,4 +596,6 @@ flowchart LR
 - Billing state is never mirrored to Convex; only app-domain data is persisted there.
 - Entitlements are checked server-side first (`has()`), then reflected in client UI with `<Protect>`.
 - Dependency management uses `pnpm` for any new packages.
+- UI implementation uses Tailwind CSS + shadcn/ui as the default design system.
+- Use shadcn MCP tooling in Cursor for shadcn component discovery/installation during UI phases.
 
