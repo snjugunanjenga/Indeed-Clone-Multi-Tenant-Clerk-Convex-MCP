@@ -27,7 +27,9 @@ export default clerkMiddleware(async (auth, req) => {
 
   const { orgId, has } = await auth();
   if (!orgId) {
-    return NextResponse.redirect(new URL("/pricing?reason=org_required", req.url));
+    return NextResponse.redirect(
+      new URL("/pricing?reason=org_required", req.url),
+    );
   }
 
   const hasCompanyRole =

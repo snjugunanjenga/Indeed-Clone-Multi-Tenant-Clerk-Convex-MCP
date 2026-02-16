@@ -88,7 +88,10 @@ export const createJobListing = mutation({
   handler: async (ctx, args) => {
     const user = await getOrCreateViewerUser(ctx);
     const company = await requireCompany(args.companyId, ctx);
-    await requireCompanyRole(ctx, args.companyId, user._id, ["admin", "recruiter"]);
+    await requireCompanyRole(ctx, args.companyId, user._id, [
+      "admin",
+      "recruiter",
+    ]);
 
     if (
       args.salaryMin !== undefined &&
@@ -178,8 +181,10 @@ export const searchJobListings = query({
         .withSearchIndex("search_jobs", (q) => {
           let scoped = q.search("searchText", text);
           if (args.companyId) scoped = scoped.eq("companyId", args.companyId);
-          if (args.workplaceType) scoped = scoped.eq("workplaceType", args.workplaceType);
-          if (args.employmentType) scoped = scoped.eq("employmentType", args.employmentType);
+          if (args.workplaceType)
+            scoped = scoped.eq("workplaceType", args.workplaceType);
+          if (args.employmentType)
+            scoped = scoped.eq("employmentType", args.employmentType);
           return scoped;
         });
 
@@ -209,7 +214,9 @@ export const searchJobListings = query({
         .take(limit * 4);
     }
 
-    const statusFiltered = includeClosed ? rows : rows.filter((job) => job.isActive);
+    const statusFiltered = includeClosed
+      ? rows
+      : rows.filter((job) => job.isActive);
     const uniqueRows = Array.from(
       new Map(statusFiltered.map((row) => [row._id, row])).values(),
     );
@@ -275,7 +282,10 @@ export const updateJobListing = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateViewerUser(ctx);
-    await requireCompanyRole(ctx, args.companyId, user._id, ["admin", "recruiter"]);
+    await requireCompanyRole(ctx, args.companyId, user._id, [
+      "admin",
+      "recruiter",
+    ]);
 
     const existing = await ctx.db.get(args.jobId);
     if (!existing || existing.companyId !== args.companyId) {
@@ -332,7 +342,10 @@ export const closeJobListing = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateViewerUser(ctx);
-    await requireCompanyRole(ctx, args.companyId, user._id, ["admin", "recruiter"]);
+    await requireCompanyRole(ctx, args.companyId, user._id, [
+      "admin",
+      "recruiter",
+    ]);
 
     const existing = await ctx.db.get(args.jobId);
     if (!existing || existing.companyId !== args.companyId) {

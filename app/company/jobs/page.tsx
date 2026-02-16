@@ -164,6 +164,9 @@ export default function CompanyJobsPage() {
                       Reopen listing
                     </Button>
                   )}
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/company/jobs/${job._id}/edit`}>Edit listing</Link>
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
