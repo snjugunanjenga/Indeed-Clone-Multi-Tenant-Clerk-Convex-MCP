@@ -10,10 +10,10 @@ todos:
     status: completed
   - id: phase3-sync-events
     content: Add Clerk webhook sync and application decision-to-notification workflow
-    status: in_progress
+    status: completed
   - id: phase4-product-ui
     content: Build landing page plus candidate and company dashboards/routes
-    status: pending
+    status: in_progress
   - id: phase5-verify
     content: Validate permissions, billing gates, and core end-to-end flows
     status: pending
@@ -457,8 +457,27 @@ flowchart LR
 
 #### P3A: Clerk webhook endpoint
 
-- Add Clerk webhook endpoint at `app/api/webhooks/clerk/route.ts`.
-- Verify webhook signatures and return quickly on success.
+- Add Clerk webhook endpoint as Convex HTTP route in `convex/http.ts` at path `/webhooks/clerk`.
+- Verify webhook signatures in Convex using Svix headers and `CLERK_WEBHOOK_SIGNING_SECRET`.
+- Local/dev without custom domain:
+  - Use your Convex public URL from `.env.local`:
+    - `NEXT_PUBLIC_CONVEX_SITE_URL`
+  - Final endpoint is:
+    - `<NEXT_PUBLIC_CONVEX_SITE_URL>/webhooks/clerk`
+- In Clerk Dashboard -> Webhooks:
+  - Add endpoint URL: `<NEXT_PUBLIC_CONVEX_SITE_URL>/webhooks/clerk`
+  - Copy the endpoint signing secret from Clerk.
+  - Subscribe to: `user.*`, `organization.*`, `organizationMembership.*`
+  - Save endpoint.
+- Set Convex env variable:
+  - `CLERK_WEBHOOK_SIGNING_SECRET=<secret from Clerk endpoint>`
+  - Use Convex Dashboard -> Settings -> Environment Variables (for each deployment), or CLI:
+    - `npx convex env set CLERK_WEBHOOK_SIGNING_SECRET "<value>"`
+- Push config/code updates:
+  - `pnpm convex codegen` (or `npx convex dev`) to ensure HTTP routes/functions are deployed.
+- Validate webhook delivery:
+  - Clerk Dashboard -> Webhooks -> endpoint deliveries show `2xx`.
+  - If failing, replay events after fixing config.
 
 #### P3B: Identity and org sync
 
