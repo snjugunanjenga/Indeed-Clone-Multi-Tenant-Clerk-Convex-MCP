@@ -181,6 +181,14 @@ export const updateApplicationStatus = mutation({
     });
 
     const job = await ctx.db.get(application.jobId);
+    if (args.status === "accepted" && job?.autoCloseOnAccept && job.isActive) {
+      await ctx.db.patch(job._id, {
+        isActive: false,
+        closedAt: now,
+        updatedAt: now,
+      });
+    }
+
     await ctx.db.insert("notifications", {
       userId: application.applicantUserId,
       type: "application_status",

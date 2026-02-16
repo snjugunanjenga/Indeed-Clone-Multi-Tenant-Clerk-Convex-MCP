@@ -83,6 +83,7 @@ export const createJobListing = mutation({
     salaryCurrency: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     featured: v.optional(v.boolean()),
+    autoCloseOnAccept: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateViewerUser(ctx);
@@ -121,6 +122,7 @@ export const createJobListing = mutation({
       }),
       isActive: true,
       featured: args.featured ?? false,
+      autoCloseOnAccept: args.autoCloseOnAccept ?? false,
       applicationCount: 0,
       postedByUserId: user._id,
       createdAt: now,
@@ -268,6 +270,7 @@ export const updateJobListing = mutation({
     salaryCurrency: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     featured: v.optional(v.boolean()),
+    autoCloseOnAccept: v.optional(v.boolean()),
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -305,6 +308,7 @@ export const updateJobListing = mutation({
       salaryCurrency: args.salaryCurrency ?? undefined,
       tags,
       featured: args.featured ?? undefined,
+      autoCloseOnAccept: args.autoCloseOnAccept ?? undefined,
       isActive: args.isActive ?? undefined,
       searchText: buildSearchText({
         title,

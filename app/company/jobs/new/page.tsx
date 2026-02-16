@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -29,6 +30,7 @@ type JobFormValues = {
   salaryMax: string;
   salaryCurrency: string;
   tags: string;
+  autoCloseOnAccept: boolean;
 };
 
 export default function NewCompanyJobPage() {
@@ -53,6 +55,7 @@ export default function NewCompanyJobPage() {
       salaryMax: "",
       salaryCurrency: "USD",
       tags: "",
+      autoCloseOnAccept: false,
     },
   });
 
@@ -126,6 +129,7 @@ export default function NewCompanyJobPage() {
                       .split(",")
                       .map((tag) => tag.trim())
                       .filter(Boolean),
+                    autoCloseOnAccept: values.autoCloseOnAccept,
                   });
                   setStatusText("Job listing created.");
                   router.push("/company/jobs");
@@ -276,6 +280,28 @@ export default function NewCompanyJobPage() {
                     <FormControl>
                       <Input placeholder="typescript, design, saas" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="autoCloseOnAccept"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-3 rounded-md border p-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
+                      />
+                    </FormControl>
+                    <div className="space-y-1">
+                      <FormLabel>Auto-close listing after first accepted applicant</FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Enable for single-hire roles. Leave off if you need multiple hires.
+                      </p>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

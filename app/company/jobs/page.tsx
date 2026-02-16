@@ -94,9 +94,14 @@ export default function CompanyJobsPage() {
                     {job.employmentType.replace("_", " ")}
                   </p>
                 </div>
-                <Badge variant={job.isActive ? "secondary" : "outline"}>
-                  {job.isActive ? "Active" : "Closed"}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {job.autoCloseOnAccept ? (
+                    <Badge variant="outline">Auto-close on accept</Badge>
+                  ) : null}
+                  <Badge variant={job.isActive ? "secondary" : "outline"}>
+                    {job.isActive ? "Active" : "Closed"}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -159,6 +164,37 @@ export default function CompanyJobsPage() {
                       Reopen listing
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={mutatingJobId === job._id}
+                    onClick={async () => {
+                      setStatusText(null);
+                      setMutatingJobId(job._id);
+                      try {
+                        await updateJobListing({
+                          companyId: companyContext.companyId,
+                          jobId: job._id,
+                          autoCloseOnAccept: !job.autoCloseOnAccept,
+                        });
+                        setStatusText(
+                          !job.autoCloseOnAccept
+                            ? "Auto-close on accept enabled."
+                            : "Auto-close on accept disabled.",
+                        );
+                      } catch (error) {
+                        setStatusText(
+                          error instanceof Error
+                            ? error.message
+                            : "Could not update auto-close setting.",
+                        );
+                      } finally {
+                        setMutatingJobId(null);
+                      }
+                    }}
+                  >
+                    {job.autoCloseOnAccept ? "Disable auto-close" : "Enable auto-close"}
+                  </Button>
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">

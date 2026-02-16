@@ -13,10 +13,10 @@ todos:
     status: completed
   - id: phase4-product-ui
     content: Build landing page plus candidate and company dashboards/routes
-    status: in_progress
+    status: completed
   - id: phase5-verify
     content: Validate permissions, billing gates, and core end-to-end flows
-    status: pending
+    status: in_progress
 isProject: false
 ---
 
@@ -437,6 +437,9 @@ flowchart LR
 
 - Create `convex/jobs.ts` for create/list/search/filter/update/close workflows.
 - Add indexes/search indexes for search term + filter combinations.
+- Add per-listing hiring strategy toggle:
+  - `autoCloseOnAccept: boolean` (default `false`).
+  - Used for single-hire postings that should close automatically after first accepted application.
 
 #### P2C: Applications API
 
@@ -584,6 +587,10 @@ flowchart LR
 - Added role-aware navigation and actions in company layout and pages:
   - `org:admin` and `org:recruiter`: create/reopen/close/decision actions.
   - `org:member`: read-only views.
+- Job management UX includes optional auto-close behavior:
+  - New job form supports `autoCloseOnAccept` toggle.
+  - Jobs list supports enable/disable toggle per listing.
+  - Listings with auto-close enabled show a visible badge.
 - Checklist completion:
   1. Company overview dashboard with org-aware summary cards. ✅
   2. Company jobs list wired to `api.jobs.listCompanyJobs`. ✅
@@ -602,6 +609,12 @@ flowchart LR
   - If `orgId` is missing, show Clerk `CreateOrganization` flow inline first.
   - After org creation, redirect back to `/pricing` and render `<PricingTable for="organization" />`.
   - Include `OrganizationSwitcher` when `orgId` exists so users can switch org context before selecting a plan.
+- Billing route enhancements implemented:
+  - `app/company/billing/page.tsx` now shows derived current plan (`free|starter|growth`) plus explicit seat/job limits.
+  - Added usage cards that compare real Convex usage against plan limits.
+  - Usage data query added in `convex/companies.ts` (`getCompanyUsage`) and gated by company membership role.
+  - Admin-only plan management remains enforced with `<Protect role="org:admin">`.
+- P4D completion status: **completed**.
 
 ### Phase 5: Quality, observability, and launch hardening
 
@@ -609,15 +622,32 @@ flowchart LR
 
 - Add loading, empty, and error states for all critical pages.
 - Add optimistic UI where safe (favorites, status updates).
+- Implemented reliability/feedback hardening:
+  - Candidate jobs save/unsave now has pending state + success/error feedback.
+  - Candidate applications withdraw now has pending state + success/error feedback.
+  - Candidate favorites remove now has pending state + success/error feedback.
+  - Company billing usage query no longer throws when user record is not yet synced; UI now shows graceful fallback.
+- P5A status: **completed**.
 
 #### P5B: Security and access validation
 
 - Verify candidate cannot access company routes/actions.
 - Verify company users are scoped to active org and role permissions.
+- Guard model confirmed and preserved:
+  - `proxy.ts` enforces auth on candidate/company routes.
+  - `proxy.ts` redirects users without org context away from `/company/*`.
+  - Convex mutations for company actions continue to enforce active membership + role checks (`admin|recruiter` where required).
+- P5B status: **completed (code-level validation)**.
 
 #### P5C: Core flow smoke tests
 
 - Validate sign-in, search/filter, apply, save/favorite, company review, and decision notifications.
+- Validate auto-close flow:
+  1. Create job with `autoCloseOnAccept = true`.
+  2. Candidate applies.
+  3. Company marks application `accepted`.
+  4. Listing automatically transitions to closed (`isActive = false`).
+  5. Candidate cannot submit a new application to that closed listing.
 
 #### P5D: Deployment and data verification
 
@@ -632,6 +662,7 @@ flowchart LR
 - Billing applies only to company org features; candidate experience remains free.
 - Billing state is never mirrored to Convex; only app-domain data is persisted there.
 - Entitlements are checked server-side first (`has()`), then reflected in client UI with `<Protect>`.
+- Job listings can optionally auto-close after first accepted applicant via `autoCloseOnAccept`.
 - Dependency management uses `pnpm` for any new packages.
 - UI implementation uses Tailwind CSS + shadcn/ui as the default design system.
 - Use shadcn MCP tooling in Cursor for shadcn component discovery/installation during UI phases.

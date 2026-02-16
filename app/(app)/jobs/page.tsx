@@ -35,6 +35,8 @@ export default function JobsPage() {
   const favorites = useQuery(api.favorites.listMyFavorites, { limit: 200 });
   const addFavorite = useMutation(api.favorites.addFavorite);
   const removeFavorite = useMutation(api.favorites.removeFavorite);
+  const [statusText, setStatusText] = useState<string | null>(null);
+  const [pendingFavoriteJobId, setPendingFavoriteJobId] = useState<string | null>(null);
 
   const favoriteJobIds = useMemo(
     () => new Set((favorites ?? []).map((item) => item.job?._id).filter(Boolean)),
@@ -85,6 +87,7 @@ export default function JobsPage() {
       </Card>
 
       <div className="grid gap-4">
+        {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
         {jobs === undefined && <p className="text-sm text-muted-foreground">Loading jobs...</p>}
         {jobs?.length === 0 && (
           <Card>
@@ -125,11 +128,24 @@ export default function JobsPage() {
                   <Button
                     size="sm"
                     variant={isFavorite ? "secondary" : "outline"}
-                    onClick={() => {
-                      if (isFavorite) {
-                        void removeFavorite({ jobId: job._id });
-                      } else {
-                        void addFavorite({ jobId: job._id });
+                    disabled={pendingFavoriteJobId === job._id}
+                    onClick={async () => {
+                      setStatusText(null);
+                      setPendingFavoriteJobId(job._id);
+                      try {
+                        if (isFavorite) {
+                          await removeFavorite({ jobId: job._id });
+                          setStatusText("Removed from saved jobs.");
+                        } else {
+                          await addFavorite({ jobId: job._id });
+                          setStatusText("Saved job.");
+                        }
+                      } catch (error) {
+                        setStatusText(
+                          error instanceof Error ? error.message : "Could not update saved jobs.",
+                        );
+                      } finally {
+                        setPendingFavoriteJobId(null);
                       }
                     }}
                   >

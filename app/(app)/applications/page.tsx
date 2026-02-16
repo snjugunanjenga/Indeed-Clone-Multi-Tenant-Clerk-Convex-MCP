@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ const statusTone: Record<string, "outline" | "secondary" | "default"> = {
 export default function ApplicationsPage() {
   const applications = useQuery(api.applications.listMyApplications, { limit: 100 });
   const withdrawApplication = useMutation(api.applications.withdrawApplication);
+  const [statusText, setStatusText] = useState<string | null>(null);
+  const [withdrawingApplicationId, setWithdrawingApplicationId] = useState<string | null>(null);
 
   return (
     <section className="space-y-4">
@@ -26,6 +29,7 @@ export default function ApplicationsPage() {
           <CardDescription>Track every role you have applied to.</CardDescription>
         </CardHeader>
       </Card>
+      {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
 
       {applications === undefined && <p className="text-sm text-muted-foreground">Loading applications...</p>}
       {applications?.length === 0 && (
@@ -59,9 +63,23 @@ export default function ApplicationsPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => void withdrawApplication({ applicationId: application._id })}
+                  disabled={withdrawingApplicationId === application._id}
+                  onClick={async () => {
+                    setStatusText(null);
+                    setWithdrawingApplicationId(application._id);
+                    try {
+                      await withdrawApplication({ applicationId: application._id });
+                      setStatusText("Application withdrawn.");
+                    } catch (error) {
+                      setStatusText(
+                        error instanceof Error ? error.message : "Could not withdraw application.",
+                      );
+                    } finally {
+                      setWithdrawingApplicationId(null);
+                    }
+                  }}
                 >
-                  Withdraw
+                  {withdrawingApplicationId === application._id ? "Withdrawing..." : "Withdraw"}
                 </Button>
               )}
             </CardContent>

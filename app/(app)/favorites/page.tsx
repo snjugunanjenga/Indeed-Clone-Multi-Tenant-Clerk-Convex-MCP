@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ function formatSalary(min?: number, max?: number, currency?: string) {
 export default function FavoritesPage() {
   const favorites = useQuery(api.favorites.listMyFavorites, { limit: 200 });
   const removeFavorite = useMutation(api.favorites.removeFavorite);
+  const [statusText, setStatusText] = useState<string | null>(null);
+  const [removingJobId, setRemovingJobId] = useState<string | null>(null);
 
   return (
     <section className="space-y-4">
@@ -26,6 +29,7 @@ export default function FavoritesPage() {
           <CardDescription>Keep track of opportunities you want to revisit.</CardDescription>
         </CardHeader>
       </Card>
+      {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
 
       {favorites === undefined && <p className="text-sm text-muted-foreground">Loading saved jobs...</p>}
       {favorites?.length === 0 && (
@@ -66,9 +70,23 @@ export default function FavoritesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => void removeFavorite({ jobId: job._id })}
+                    disabled={removingJobId === job._id}
+                    onClick={async () => {
+                      setStatusText(null);
+                      setRemovingJobId(job._id);
+                      try {
+                        await removeFavorite({ jobId: job._id });
+                        setStatusText("Removed from saved jobs.");
+                      } catch (error) {
+                        setStatusText(
+                          error instanceof Error ? error.message : "Could not remove saved job.",
+                        );
+                      } finally {
+                        setRemovingJobId(null);
+                      }
+                    }}
                   >
-                    Remove
+                    {removingJobId === job._id ? "Removing..." : "Remove"}
                   </Button>
                 </div>
               </CardContent>

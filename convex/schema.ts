@@ -100,6 +100,7 @@ export default defineSchema({
     searchText: v.string(),
     isActive: v.boolean(),
     featured: v.boolean(),
+    autoCloseOnAccept: v.optional(v.boolean()),
     applicationCount: v.number(),
     postedByUserId: v.id("users"),
     createdAt: v.number(),
