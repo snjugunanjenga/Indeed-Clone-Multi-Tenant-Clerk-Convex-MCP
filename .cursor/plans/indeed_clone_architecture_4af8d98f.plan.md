@@ -4,13 +4,13 @@ overview: Implement an Indeed-style marketplace on the current Next.js + Clerk +
 todos:
   - id: phase1-auth-billing
     content: Set up Clerk org+billing guards and Convex auth provider/middleware boundaries
-    status: pending
+    status: completed
   - id: phase2-data-model
     content: Implement Convex schema and APIs for jobs, applications, profiles, favorites, and notifications
-    status: pending
+    status: completed
   - id: phase3-sync-events
     content: Add Clerk webhook sync and application decision-to-notification workflow
-    status: pending
+    status: in_progress
   - id: phase4-product-ui
     content: Build landing page plus candidate and company dashboards/routes
     status: pending
@@ -31,6 +31,7 @@ isProject: false
   - **Companies (paid)**: post jobs, review applicants, decide yes/no, manage team access.
 - **Clerk** handles sign-in, organizations, and billing.
 - **Convex** stores app data (jobs, applications, profiles, favorites, notifications).
+- Candidate entrypoint is `/` (not `/app`).
 
 ### Simple rule of ownership
 
@@ -118,6 +119,23 @@ isProject: false
   - Included: advanced filters + priority placement options
   - Included: stronger reporting on applicants/jobs
 
+### Canonical plan matrix (use this exact mapping)
+
+
+| Item                         | `free`      | `starter`               | `growth`  |
+| ---------------------------- | ----------- | ----------------------- | --------- |
+| Suggested price              | `$0/mo`     | `$49/mo`                | `$149/mo` |
+| Seats included               | `1`         | `3`                     | `10`      |
+| Active job listings          | `1`         | `5`                     | `25`      |
+| `job_posting`                | Yes         | Yes                     | Yes       |
+| `applicant_review`           | Yes (basic) | Yes                     | Yes       |
+| `team_management`            | No          | Yes                     | Yes       |
+| `advanced_filters`           | No          | No                      | Yes       |
+| `analytics`                  | No          | No (or basic, optional) | Yes       |
+| Priority listing options     | No          | No                      | Yes       |
+| Application yes/no decisions | Yes         | Yes                     | Yes       |
+
+
 ### Exactly how seats work
 
 - A **seat** = one active member inside a Clerk organization.
@@ -137,6 +155,10 @@ isProject: false
 
 ### Clerk billing implementation contract (must-follow)
 
+- Billing model selection is fixed:
+  - **Enable organization billing: ON**
+  - **Enable user billing: OFF**
+  - Use **organization subscription plans only** (`free`, `starter`, `growth`)
 - Use `<PricingTable for="organization" />` on the company pricing/billing page.
 - Use server-side `has()` checks for all write and sensitive actions:
   - `has({ plan: "free|starter|growth" })`
@@ -155,8 +177,27 @@ isProject: false
 #### Step A: Enable Billing for org plans
 
 - In Clerk Dashboard, go to Billing settings and enable Billing.
+- In Billing configuration, set:
+  - **Enable organization billing = ON**
+  - **Enable user billing = OFF**
 - Use development gateway for local/dev testing.
 - Connect your own Stripe account for production payments.
+
+### Clerk organization settings baseline (saved defaults)
+
+- Membership mode: **Membership optional** (required for candidate personal accounts).
+- Membership limit: **Limited membership = 10** (matches Growth plan seat cap baseline).
+- Enable verified domains: **Off** (defer for later enterprise/domain workflows).
+- Enable organization slugs: **On**.
+- Create first organization automatically: **Off**.
+- Default naming rules: **On**.
+- Detect organization name/logo from email domain: **On**.
+- Personalize organization name from member profile: **On**.
+- Allow user-created organizations: **On**.
+- Organization limit per user: **Unlimited**.
+- Default role set: **Hiring Roles (`role_set:hiring_roles`)**.
+- Allow new members to delete organizations: **Off**.
+- Save changes immediately after setting toggles.
 
 #### Step B: Create organization plans
 
@@ -180,6 +221,10 @@ isProject: false
   - `team_management`
   - `advanced_filters`
   - `analytics`
+- Apply features by plan:
+  - `free`: `job_posting`, `applicant_review`
+  - `starter`: `job_posting`, `applicant_review`, `team_management`
+  - `growth`: `job_posting`, `applicant_review`, `team_management`, `advanced_filters`, `analytics`
 
 #### Step D: Map permissions to feature keys
 
@@ -188,6 +233,13 @@ isProject: false
 - Example:
   - Permission: `org:team_management:invite`
   - Required feature on plan: `team_management`
+- Starter permission set:
+  - `org:job_posting:manage`
+  - `org:applicant_review:decide`
+  - `org:team_management:invite`
+- Growth adds:
+  - `org:advanced_filters:use`
+  - `org:analytics:view`
 
 #### Step E: Configure Publicly available options
 
@@ -201,6 +253,67 @@ isProject: false
 - Create a dedicated pricing route using `<PricingTable for="organization" />`.
 - Link all upgrade CTAs (seat limit, job limit, locked feature) to this page.
 
+#### Step G: Create role set (beginner checklist)
+
+1. Go to **Organizations → Configure → Roles & Permissions → Role sets**.
+2. Click **Create role set**.
+3. Set:
+  - Name: `Hiring Roles`
+  - Key: `hiring_roles`
+4. Add roles:
+  - `Admin` (`org:admin`)
+  - `Member` (`org:member`)
+  - `Recruiter` (`org:recruiter`)
+5. Set defaults in role set creation:
+  - Organization creator role: `admin`
+  - New members default role: `member`
+6. Save role set.
+7. Ensure organizations in this instance use `Hiring Roles` (not `Default role set`).
+
+#### Step H: Recruiter permissions (beginner checklist)
+
+1. Open role `Recruiter` in **All roles**.
+2. In **Custom permissions**, add:
+  - `org:job_posting:manage`
+  - `org:applicant_review:decide`
+  - `org:team_management:invite`
+3. In **System permissions**, keep all organization-admin controls off (no billing/domain/org-delete).
+4. Save.
+
+#### Step I: Admin permissions (beginner checklist)
+
+1. Open role `Admin` in **All roles**.
+2. In **Custom permissions**, ensure these are enabled:
+  - `org:job_posting:manage`
+  - `org:applicant_review:decide`
+  - `org:team_management:invite`
+  - `org:team_management:remove`
+  - `org:advanced_filters:use`
+  - `org:analytics:view`
+3. Save.
+
+#### Step J: Member permissions (beginner checklist)
+
+1. Open role `Member` in **All roles**.
+2. Keep member as read-only baseline (no custom permissions required).
+3. Save.
+
+#### Step K: Final verification (must pass before Phase 2)
+
+1. Confirm role set list shows `Hiring Roles` with `Admin`, `Member`, `Recruiter`.
+2. Confirm role keys are exactly:
+  - `org:admin`
+  - `org:member`
+  - `org:recruiter`
+3. Confirm plan features are mapped:
+  - `free`: `job_posting`, `applicant_review`
+  - `starter`: + `team_management`
+  - `growth`: + `advanced_filters`, `analytics`
+4. Run app checks:
+  - `/company` feature cards update based on plan/permission.
+  - `/company/billing` `has()` status rows reflect plan + permission state.
+  - `<PricingTable for="organization" />` displays organization plans.
+
 ### Permission-feature coupling rule (critical)
 
 - Custom permissions are coupled to plan features in Clerk.
@@ -213,6 +326,19 @@ isProject: false
   1. Check plan/feature entitlement (`has({ plan })` or `has({ feature })`).
   2. Then check permission (`has({ permission: "org:<feature>:<action>" })`).
   3. Deny with upgrade guidance if feature is missing; deny with access message if permission is missing.
+
+### How plan permissions work (beginner clarity)
+
+- Plans do **not** directly grant permissions.
+- Plans grant **features**.
+- Roles grant **permissions**.
+- A permission is effective only when:
+  - member role includes that permission, and
+  - the matching feature exists in the org's active plan.
+- Example:
+  - role has `org:team_management:invite`
+  - plan must include `team_management`
+  - otherwise `has({ permission: "org:team_management:invite" })` returns `false`.
 
 ### First-pass feature mapping by tier
 
@@ -282,6 +408,21 @@ flowchart LR
 
 - Add company billing page with Clerk Billing UI, including `<PricingTable for="organization" />`.
 - Show clear upgrade prompts when limits are reached (seats/job postings/features).
+
+#### Phase 1 completion checkpoint (now completed)
+
+- Convex auth with Clerk configured.
+- Middleware route boundaries and redirects centralized in `proxy.ts`.
+- Clerk org settings configured for hybrid B2C+B2B flow.
+- Org-only billing selected (`organization billing ON`, `user billing OFF`).
+- Role set `Hiring Roles` created and active with:
+  - `org:admin`
+  - `org:member`
+  - `org:recruiter`
+- Custom permissions configured for recruiter/admin.
+- Plan + feature matrix configured for `free`, `starter`, `growth`.
+- Pricing pages use `<PricingTable for="organization" />`.
+- `has()` and `<Protect>` patterns in place for gated routes/components.
 
 ### Phase 2: Convex domain model and API surface
 

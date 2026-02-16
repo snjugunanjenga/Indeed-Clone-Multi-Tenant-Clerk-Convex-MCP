@@ -8,7 +8,13 @@
  * @module
  */
 
-import type * as myFunctions from "../myFunctions.js";
+import type * as applications from "../applications.js";
+import type * as favorites from "../favorites.js";
+import type * as jobs from "../jobs.js";
+import type * as lib_auth from "../lib/auth.js";
+import type * as lib_companies from "../lib/companies.js";
+import type * as notifications from "../notifications.js";
+import type * as profiles from "../profiles.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +23,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  myFunctions: typeof myFunctions;
+  applications: typeof applications;
+  favorites: typeof favorites;
+  jobs: typeof jobs;
+  "lib/auth": typeof lib_auth;
+  "lib/companies": typeof lib_companies;
+  notifications: typeof notifications;
+  profiles: typeof profiles;
 }>;
 
 /**
