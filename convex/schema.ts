@@ -14,20 +14,72 @@ export default defineSchema({
 
   profiles: defineTable({
     userId: v.id("users"),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
     headline: v.optional(v.string()),
     bio: v.optional(v.string()),
+    summary: v.optional(v.string()),
     location: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    website: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    githubUrl: v.optional(v.string()),
     yearsExperience: v.optional(v.number()),
     skills: v.array(v.string()),
     openToWork: v.boolean(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),
 
+  experiences: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    company: v.string(),
+    location: v.optional(v.string()),
+    startDate: v.string(),
+    endDate: v.optional(v.string()),
+    isCurrent: v.boolean(),
+    description: v.optional(v.string()),
+    order: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_order", ["userId", "order"]),
+
+  education: defineTable({
+    userId: v.id("users"),
+    school: v.string(),
+    degree: v.optional(v.string()),
+    fieldOfStudy: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    description: v.optional(v.string()),
+    order: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_order", ["userId", "order"]),
+
+  certifications: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    issuingOrg: v.string(),
+    issueDate: v.optional(v.string()),
+    expirationDate: v.optional(v.string()),
+    credentialUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   resumes: defineTable({
     userId: v.id("users"),
     title: v.string(),
-    fileUrl: v.string(),
+    storageId: v.optional(v.id("_storage")),
+    fileUrl: v.optional(v.string()),
     fileName: v.string(),
+    fileSize: v.optional(v.number()),
+    contentType: v.optional(v.string()),
     isDefault: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -44,6 +96,15 @@ export default defineSchema({
     description: v.optional(v.string()),
     location: v.optional(v.string()),
     createdByUserId: v.optional(v.id("users")),
+    plan: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("starter"),
+        v.literal("growth"),
+      ),
+    ),
+    seatLimit: v.optional(v.number()),
+    jobLimit: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -156,10 +217,12 @@ export default defineSchema({
     type: v.union(
       v.literal("application_status"),
       v.literal("application_received"),
+      v.literal("job_closed"),
       v.literal("system"),
     ),
     title: v.string(),
     message: v.string(),
+    linkUrl: v.optional(v.string()),
     metadata: v.optional(v.any()),
     isRead: v.boolean(),
     readAt: v.optional(v.number()),

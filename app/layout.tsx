@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "sonner";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -35,8 +36,28 @@ export default function RootLayout({
       <body
         className={`${bricolage.variable} ${figtree.variable} antialiased`}
       >
-        <ClerkProvider dynamic>
+        <ClerkProvider
+          dynamic
+          appearance={{
+            cssLayerName: "clerk",
+            variables: {
+              colorPrimary: "var(--terracotta)",
+              colorBackground: "var(--background)",
+              colorForeground: "var(--foreground)",
+              colorPrimaryForeground: "var(--primary-foreground)",
+              colorMuted: "var(--muted)",
+              colorMutedForeground: "var(--muted-foreground)",
+              colorBorder: "var(--border)",
+              colorInput: "var(--input)",
+              colorInputForeground: "var(--foreground)",
+              colorRing: "var(--ring)",
+              borderRadius: "var(--radius)",
+              fontFamily: "var(--font-figtree), var(--font-sans), sans-serif",
+            },
+          }}
+        >
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster richColors closeButton position="bottom-right" />
         </ClerkProvider>
       </body>
     </html>

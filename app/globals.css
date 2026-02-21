@@ -1,3 +1,4 @@
+@layer theme, base, clerk, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -53,6 +54,7 @@
   --animate-fade-in: fade-in 0.5s ease-out both;
   --animate-slide-up: slide-up 0.5s ease-out both;
   --animate-slide-down: slide-down 0.4s ease-out both;
+  --animate-float: float 6s ease-in-out infinite;
 }
 
 /* Warm Professional — Light Mode */
@@ -164,6 +166,15 @@
   }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -172,6 +183,10 @@
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv01";
   }
+}
+
+/* Clerk components inject styles into this layer (cssLayerName: "clerk") so Tailwind utilities can override when needed */
+@layer clerk {
 }
 
 /* Stagger delay utilities */
@@ -194,6 +209,67 @@
   .warm-shadow-lg {
     box-shadow: 0 10px 15px -3px rgb(26 21 35 / 0.08), 0 4px 6px -4px rgb(26 21 35 / 0.04);
   }
+}
+
+/* Tiptap placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Rich text content styles */
+.prose-job h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+.prose-job h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+.prose-job p {
+  margin-bottom: 0.5rem;
+}
+.prose-job ul,
+.prose-job ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-job ul {
+  list-style-type: disc;
+}
+.prose-job ol {
+  list-style-type: decimal;
+}
+.prose-job li {
+  margin-bottom: 0.2rem;
+}
+.prose-job strong {
+  font-weight: 600;
+}
+.prose-job em {
+  font-style: italic;
+}
+.prose-job > *:first-child {
+  margin-top: 0;
+}
+.prose-job > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Clerk PricingTable popover fix — keep expanded cards above sticky headers (z-50) */
+.cl-pricingTableRoot [data-popover],
+.cl-pricingTableRoot [role="dialog"],
+div[data-clerk-portal] {
+  z-index: 60 !important;
 }
 
 /* Grain texture overlay */

@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { api } from "@/convex/_generated/api";
+import { getErrorMessage } from "@/lib/convex-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/rich-text-editor";
 import { ArrowLeft, Send } from "lucide-react";
 import Link from "next/link";
 
@@ -45,7 +46,17 @@ export default function NewCompanyJobPage() {
     api.companies.getMyCompanyContext,
     orgId ? { clerkOrgId: orgId } : "skip",
   );
+  const usage = useQuery(
+    api.companies.getCompanyUsage,
+    companyContext ? { companyId: companyContext.companyId } : "skip",
+  );
   const createJobListing = useMutation(api.jobs.createJobListing);
+
+  const jobLimit = companyContext?.jobLimit ?? 1;
+  const atJobLimit =
+    usage !== undefined &&
+    usage !== null &&
+    usage.activeJobCount >= jobLimit;
 
   const form = useForm<JobFormValues>({
     defaultValues: {
@@ -124,15 +135,29 @@ export default function NewCompanyJobPage() {
         </p>
       </div>
 
-      <Card className="warm-shadow">
-        <CardContent className="p-6">
+      {atJobLimit && (
+        <Card className="border-amber-accent/30 bg-amber-accent/5">
+          <CardContent className="py-4">
+            <p className="text-sm font-medium text-amber-accent">
+              Active job limit reached ({usage?.activeJobCount ?? 0}/{jobLimit})
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Upgrade your plan or close a job to open a new listing.
+            </p>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link href="/company/billing">Manage billing</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="@container warm-shadow">
+        <CardContent className="p-4 @sm:p-6">
           <Form {...form}>
             <form
               className="space-y-6"
               onSubmit={form.handleSubmit(async (values) => {
                 setStatusText(null);
-                const salaryMin = values.salaryMin.trim();
-                const salaryMax = values.salaryMax.trim();
 
                 try {
                   await createJobListing({
@@ -142,9 +167,9 @@ export default function NewCompanyJobPage() {
                     location: values.location.trim(),
                     employmentType: values.employmentType,
                     workplaceType: values.workplaceType,
-                    salaryMin: salaryMin ? Number(salaryMin) : undefined,
-                    salaryMax: salaryMax ? Number(salaryMax) : undefined,
-                    salaryCurrency: values.salaryCurrency.trim() || undefined,
+                    salaryMin: Number(values.salaryMin),
+                    salaryMax: Number(values.salaryMax),
+                    salaryCurrency: values.salaryCurrency.trim(),
                     tags: values.tags
                       .split(",")
                       .map((tag) => tag.trim())
@@ -154,9 +179,7 @@ export default function NewCompanyJobPage() {
                   setStatusText("Job listing created.");
                   router.push("/company/jobs");
                 } catch (error) {
-                  setStatusText(
-                    error instanceof Error ? error.message : "Could not create job listing.",
-                  );
+                  setStatusText(getErrorMessage(error, "Could not create job listing."));
                 }
               })}
             >
@@ -189,7 +212,11 @@ export default function NewCompanyJobPage() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea rows={8} placeholder="Role summary, requirements, responsibilities..." {...field} />
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Role summary, requirements, responsibilities..."
+                        />
                       </FormControl>
                       <FormDescription>Describe the role, team, and what you&apos;re looking for.</FormDescription>
                       <FormMessage />
@@ -203,7 +230,7 @@ export default function NewCompanyJobPage() {
                 <h3 className="font-[family-name:var(--font-bricolage)] text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                   Details
                 </h3>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 @xl:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="location"
@@ -262,10 +289,11 @@ export default function NewCompanyJobPage() {
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 @xl:grid-cols-3">
                   <FormField
                     control={form.control}
                     name="salaryMin"
+                    rules={{ required: "Minimum salary is required." }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Salary min</FormLabel>
@@ -279,6 +307,7 @@ export default function NewCompanyJobPage() {
                   <FormField
                     control={form.control}
                     name="salaryMax"
+                    rules={{ required: "Maximum salary is required." }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Salary max</FormLabel>
@@ -292,6 +321,7 @@ export default function NewCompanyJobPage() {
                   <FormField
                     control={form.control}
                     name="salaryCurrency"
+                    rules={{ required: "Currency is required." }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Currency</FormLabel>
@@ -352,7 +382,7 @@ export default function NewCompanyJobPage() {
               <div className="flex items-center gap-3 border-t border-border pt-6">
                 <Button
                   type="submit"
-                  disabled={form.formState.isSubmitting}
+                  disabled={form.formState.isSubmitting || atJobLimit}
                   className="rounded-full bg-terracotta text-white hover:bg-terracotta/90"
                 >
                   <Send className="mr-1.5 size-3.5" />

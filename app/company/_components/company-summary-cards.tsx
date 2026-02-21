@@ -18,10 +18,12 @@ export function CompanySummaryCards({ orgId }: { orgId: string }) {
 
   if (companyContext === undefined || jobs === undefined || applications === undefined) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary" />
-        ))}
+      <div className="@container">
+        <div className="grid gap-4 @sm:grid-cols-2 @3xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -48,7 +50,8 @@ export function CompanySummaryCards({ orgId }: { orgId: string }) {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="@container">
+    <div className="grid gap-4 @sm:grid-cols-2 @3xl:grid-cols-4">
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
@@ -67,6 +70,7 @@ export function CompanySummaryCards({ orgId }: { orgId: string }) {
           </Card>
         );
       })}
+    </div>
     </div>
   );
 }

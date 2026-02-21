@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { BriefcaseBusiness } from "lucide-react";
 
 export function SiteLogo() {
   return (
     <Link href="/" className="flex items-center gap-2">
-      <div className="flex size-7 items-center justify-center rounded-lg bg-terracotta text-white">
-        <BriefcaseBusiness className="size-3.5" />
+      <div className="flex items-center gap-0.5">
+        <div className="size-3 rounded-full bg-jade" />
+        <div className="size-3 rounded-full bg-jade/60" />
       </div>
-      <span className="font-[family-name:var(--font-bricolage)] text-base font-bold tracking-tight">
+      <span className="font-(family-name:--font-bricolage) text-xl font-bold tracking-tight">
         Jobly
       </span>
     </Link>

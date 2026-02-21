@@ -25,9 +25,11 @@ export function BillingUsageCards({
 
   if (!orgId || companyContext === undefined || usage === undefined) {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
-        <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
+      <div className="@container">
+        <div className="grid gap-4 @md:grid-cols-2">
+          <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
+          <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
+        </div>
       </div>
     );
   }
@@ -56,7 +58,8 @@ export function BillingUsageCards({
   const jobsUsed = usage.activeJobCount;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="@container">
+    <div className="grid gap-4 @md:grid-cols-2">
       <UsageCard
         icon={Users}
         label="Seats"
@@ -71,6 +74,7 @@ export function BillingUsageCards({
         limit={jobLimit}
         helper={`${usage.totalJobCount} total listings`}
       />
+    </div>
     </div>
   );
 }

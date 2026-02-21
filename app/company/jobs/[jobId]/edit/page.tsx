@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
+import { getErrorMessage } from "@/lib/convex-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/rich-text-editor";
 
 type JobFormValues = {
   title: string;
@@ -136,7 +137,7 @@ export default function EditCompanyJobPage() {
         </p>
       </header>
 
-      <Card>
+      <Card className="@container">
         <CardContent className="pt-6">
           <Form {...form}>
             <form
@@ -167,9 +168,7 @@ export default function EditCompanyJobPage() {
                   setStatusText("Job listing updated.");
                   router.push("/company/jobs");
                 } catch (error) {
-                  setStatusText(
-                    error instanceof Error ? error.message : "Could not update job listing.",
-                  );
+                  setStatusText(getErrorMessage(error, "Could not update job listing."));
                 }
               })}
             >
@@ -196,14 +195,18 @@ export default function EditCompanyJobPage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea rows={8} {...field} />
+                      <RichTextEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Role summary, requirements, responsibilities..."
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 @xl:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="location"
@@ -262,7 +265,7 @@ export default function EditCompanyJobPage() {
                 />
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 @xl:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="salaryMin"

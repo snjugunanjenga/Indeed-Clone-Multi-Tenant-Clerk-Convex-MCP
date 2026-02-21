@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { getErrorMessage } from "@/lib/convex-error";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,7 @@ export default function FavoritesPage() {
     <section className="animate-fade-in space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+        <h1 className="font-(family-name:--font-bricolage) text-2xl font-bold tracking-tight">
           Saved jobs
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -51,14 +52,14 @@ export default function FavoritesPage() {
       {favorites?.length === 0 && (
         <Card className="warm-shadow">
           <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-terracotta/10">
-              <Heart className="size-5 text-terracotta" />
+            <div className="flex size-12 items-center justify-center rounded-full bg-jade/10">
+              <Heart className="size-5 text-jade" />
             </div>
             <p className="font-medium">Nothing saved yet</p>
             <p className="max-w-sm text-sm text-muted-foreground">
               Browse jobs and tap the bookmark icon to save roles you want to come back to.
             </p>
-            <Button asChild className="mt-2 rounded-full bg-terracotta text-white hover:bg-terracotta/90">
+            <Button asChild className="mt-2 rounded-full bg-jade text-white hover:bg-jade/90">
               <Link href="/jobs">
                 <Search className="mr-1.5 size-3.5" />
                 Browse jobs
@@ -76,16 +77,16 @@ export default function FavoritesPage() {
           return (
             <Card
               key={favorite._id}
-              className="animate-slide-up warm-shadow transition-all hover:warm-shadow-md"
+              className="@container animate-slide-up warm-shadow transition-all hover:warm-shadow-md"
               style={{ animationDelay: `${index * 0.04}s` }}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <CardTitle className="font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+                    <CardTitle className="font-(family-name:--font-bricolage) text-base tracking-tight @sm:text-lg">
                       <Link
                         href={`/jobs/${job._id}`}
-                        className="transition-colors hover:text-terracotta"
+                        className="transition-colors hover:text-jade"
                       >
                         {job.title}
                       </Link>
@@ -107,9 +108,7 @@ export default function FavoritesPage() {
                         await removeFavorite({ jobId: job._id });
                         setStatusText("Removed from saved jobs.");
                       } catch (error) {
-                        setStatusText(
-                          error instanceof Error ? error.message : "Could not remove saved job.",
-                        );
+                        setStatusText(getErrorMessage(error, "Could not remove saved job."));
                       } finally {
                         setRemovingJobId(null);
                       }
@@ -120,7 +119,7 @@ export default function FavoritesPage() {
                   </button>
                 </div>
               </CardHeader>
-              <CardContent className="flex flex-wrap items-center justify-between gap-2">
+              <CardContent className="flex flex-col gap-2 @xs:flex-row @xs:flex-wrap @xs:items-center @xs:justify-between">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="gap-1 rounded-full text-xs">
                     <Briefcase className="size-3" />
@@ -133,7 +132,7 @@ export default function FavoritesPage() {
                 <Button
                   asChild
                   size="sm"
-                  className="rounded-full bg-terracotta text-white hover:bg-terracotta/90"
+                  className="rounded-full bg-jade text-white hover:bg-jade/90"
                 >
                   <Link href={`/jobs/${job._id}`}>
                     View job

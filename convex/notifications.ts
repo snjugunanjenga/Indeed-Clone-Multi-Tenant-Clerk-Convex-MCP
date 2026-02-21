@@ -1,6 +1,32 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { getOrCreateViewerUser, getViewerUser } from "./lib/auth";
+
+const notificationTypeValidator = v.union(
+  v.literal("application_status"),
+  v.literal("application_received"),
+  v.literal("job_closed"),
+  v.literal("system"),
+);
+
+export const createNotification = internalMutation({
+  args: {
+    userId: v.id("users"),
+    type: notificationTypeValidator,
+    title: v.string(),
+    message: v.string(),
+    linkUrl: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  },
+  returns: v.id("notifications"),
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("notifications", {
+      ...args,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+  },
+});
 
 export const listMyNotifications = query({
   args: {

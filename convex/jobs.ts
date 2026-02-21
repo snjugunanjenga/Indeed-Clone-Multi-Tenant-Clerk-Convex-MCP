@@ -1,8 +1,21 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getOrCreateViewerUser, requireViewerUser } from "./lib/auth";
 import { requireCompany, requireCompanyRole } from "./lib/companies";
+
+function defaultJobLimitForPlan(plan: Doc<"companies">["plan"]): number {
+  switch (plan) {
+    case "growth":
+      return 25;
+    case "starter":
+      return 5;
+    case "free":
+    case undefined:
+      return 1;
+  }
+}
 
 const employmentTypeValidator = v.union(
   v.literal("full_time"),
@@ -18,6 +31,10 @@ const workplaceTypeValidator = v.union(
   v.literal("hybrid"),
 );
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 function buildSearchText(input: {
   title: string;
   description: string;
@@ -27,7 +44,7 @@ function buildSearchText(input: {
 }) {
   return [
     input.title,
-    input.description,
+    stripHtml(input.description),
     input.location,
     input.companyName,
     input.tags.join(" "),
@@ -94,9 +111,9 @@ export const createJobListing = mutation({
     location: v.string(),
     employmentType: employmentTypeValidator,
     workplaceType: workplaceTypeValidator,
-    salaryMin: v.optional(v.number()),
-    salaryMax: v.optional(v.number()),
-    salaryCurrency: v.optional(v.string()),
+    salaryMin: v.number(),
+    salaryMax: v.number(),
+    salaryCurrency: v.string(),
     tags: v.optional(v.array(v.string())),
     featured: v.optional(v.boolean()),
     autoCloseOnAccept: v.optional(v.boolean()),
@@ -109,11 +126,21 @@ export const createJobListing = mutation({
       "recruiter",
     ]);
 
-    if (
-      args.salaryMin !== undefined &&
-      args.salaryMax !== undefined &&
-      args.salaryMin > args.salaryMax
-    ) {
+    const jobLimit =
+      company.jobLimit ?? defaultJobLimitForPlan(company.plan);
+    const activeJobs = await ctx.db
+      .query("jobListings")
+      .withIndex("by_companyId_isActive", (q) =>
+        q.eq("companyId", args.companyId).eq("isActive", true),
+      )
+      .collect();
+    if (activeJobs.length >= jobLimit) {
+      throw new ConvexError(
+        `Active job limit reached (${jobLimit}). Upgrade your plan or close a job to open a new one.`,
+      );
+    }
+
+    if (args.salaryMin > args.salaryMax) {
       throw new ConvexError("salaryMin cannot be greater than salaryMax.");
     }
 
@@ -325,19 +352,8 @@ export const updateJobListing = mutation({
     const company = await requireCompany(args.companyId, ctx);
     const now = Date.now();
 
-    await ctx.db.patch(args.jobId, {
-      title: args.title ?? undefined,
-      description: args.description ?? undefined,
-      location: args.location ?? undefined,
-      employmentType: args.employmentType ?? undefined,
-      workplaceType: args.workplaceType ?? undefined,
-      salaryMin: args.salaryMin ?? undefined,
-      salaryMax: args.salaryMax ?? undefined,
-      salaryCurrency: args.salaryCurrency ?? undefined,
+    const patch: Record<string, unknown> = {
       tags,
-      featured: args.featured ?? undefined,
-      autoCloseOnAccept: args.autoCloseOnAccept ?? undefined,
-      isActive: args.isActive ?? undefined,
       searchText: buildSearchText({
         title,
         description,
@@ -346,8 +362,23 @@ export const updateJobListing = mutation({
         tags,
       }),
       updatedAt: now,
-      closedAt: args.isActive === false ? now : existing.closedAt,
-    });
+    };
+    if (args.title !== undefined) patch.title = args.title;
+    if (args.description !== undefined) patch.description = args.description;
+    if (args.location !== undefined) patch.location = args.location;
+    if (args.employmentType !== undefined) patch.employmentType = args.employmentType;
+    if (args.workplaceType !== undefined) patch.workplaceType = args.workplaceType;
+    if (args.salaryMin !== undefined) patch.salaryMin = args.salaryMin;
+    if (args.salaryMax !== undefined) patch.salaryMax = args.salaryMax;
+    if (args.salaryCurrency !== undefined) patch.salaryCurrency = args.salaryCurrency;
+    if (args.featured !== undefined) patch.featured = args.featured;
+    if (args.autoCloseOnAccept !== undefined) patch.autoCloseOnAccept = args.autoCloseOnAccept;
+    if (args.isActive !== undefined) {
+      patch.isActive = args.isActive;
+      if (args.isActive === false) patch.closedAt = now;
+    }
+
+    await ctx.db.patch(args.jobId, patch);
 
     return await ctx.db.get(args.jobId);
   },
@@ -376,6 +407,26 @@ export const closeJobListing = mutation({
       closedAt: now,
       updatedAt: now,
     });
+
+    const pendingApps = await ctx.db
+      .query("applications")
+      .withIndex("by_jobId_createdAt", (q) => q.eq("jobId", args.jobId))
+      .collect();
+
+    await Promise.all(
+      pendingApps
+        .filter((a) => a.status === "submitted" || a.status === "in_review")
+        .map((a) =>
+          ctx.runMutation(internal.notifications.createNotification, {
+            userId: a.applicantUserId,
+            type: "job_closed",
+            title: "Job listing closed",
+            message: `${existing.title} at ${existing.companyName} is no longer accepting applications.`,
+            linkUrl: `/applications`,
+            metadata: { jobId: args.jobId },
+          }),
+        ),
+    );
 
     return await ctx.db.get(args.jobId);
   },

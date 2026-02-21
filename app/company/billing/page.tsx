@@ -44,29 +44,31 @@ export default async function CompanyBillingPage() {
 
       {/* Current plan summary */}
       <Card className="warm-shadow border-terracotta/20 bg-terracotta/5">
-        <CardContent className="flex items-center gap-4 p-5">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
-            <CreditCard className="size-6" />
+        <CardContent className="space-y-4 p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+              <CreditCard className="size-6" />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</p>
+              <p className="font-[family-name:var(--font-bricolage)] text-2xl font-bold capitalize tracking-tight">
+                {currentPlan}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {seatLimit} seat{seatLimit > 1 ? "s" : ""} · {jobLimit} active job{jobLimit > 1 ? "s" : ""}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</p>
-            <p className="font-[family-name:var(--font-bricolage)] text-2xl font-bold capitalize tracking-tight">
-              {currentPlan}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {seatLimit} seat{seatLimit > 1 ? "s" : ""} · {jobLimit} active job{jobLimit > 1 ? "s" : ""}
-            </p>
+          <div className="@container">
+          <div className="grid gap-2 @sm:grid-cols-2">
+            <AccessRow label="Starter plan" enabled={hasStarterPlan} />
+            <AccessRow label="Growth plan" enabled={hasGrowthPlan} />
+            <AccessRow label="Advanced filters" enabled={hasAdvancedFilters} />
+            <AccessRow label="Team invite permission" enabled={hasInvitePermission} />
+          </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Access checks */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <AccessRow label="Starter plan" enabled={hasStarterPlan} />
-        <AccessRow label="Growth plan" enabled={hasGrowthPlan} />
-        <AccessRow label="Advanced filters" enabled={hasAdvancedFilters} />
-        <AccessRow label="Team invite permission" enabled={hasInvitePermission} />
-      </div>
 
       {/* Usage */}
       <Card className="warm-shadow">
@@ -115,7 +117,7 @@ export default async function CompanyBillingPage() {
 
 function AccessRow({ label, enabled }: { label: string; enabled: boolean }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 warm-shadow">
+    <div className="flex items-center gap-3 rounded-lg bg-background/60 px-3 py-2.5">
       {enabled ? (
         <CheckCircle2 className="size-4 shrink-0 text-jade" />
       ) : (

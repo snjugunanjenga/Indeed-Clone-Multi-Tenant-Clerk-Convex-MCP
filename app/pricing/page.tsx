@@ -12,12 +12,12 @@ export default async function PricingPage() {
     <main className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/60 bg-background/80 backdrop-blur-lg">
-        <div className="mx-auto flex w-full max-w-5xl items-center px-6 py-3">
+        <div className="mx-auto flex w-full max-w-7xl items-center px-6 py-3">
           <SiteLogo />
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-12">
         <div className="animate-fade-in space-y-2 text-center">
           <h1 className="font-[family-name:var(--font-bricolage)] text-3xl font-bold tracking-tight">
             Company plans

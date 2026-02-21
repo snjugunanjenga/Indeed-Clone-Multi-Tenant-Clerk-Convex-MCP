@@ -17,6 +17,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_companies from "../lib/companies.js";
 import type * as notifications from "../notifications.js";
 import type * as profiles from "../profiles.js";
+import type * as seed from "../seed.js";
 import type * as sync from "../sync.js";
 
 import type {
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   "lib/companies": typeof lib_companies;
   notifications: typeof notifications;
   profiles: typeof profiles;
+  seed: typeof seed;
   sync: typeof sync;
 }>;
 
