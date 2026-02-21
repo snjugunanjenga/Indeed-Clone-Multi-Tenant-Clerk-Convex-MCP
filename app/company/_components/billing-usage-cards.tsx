@@ -2,8 +2,9 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
+import { AlertTriangle, BriefcaseBusiness, Users } from "lucide-react";
 
 export function BillingUsageCards({
   seatLimit,
@@ -23,16 +24,18 @@ export function BillingUsageCards({
   );
 
   if (!orgId || companyContext === undefined || usage === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading usage...</p>;
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
+        <div className="h-28 animate-pulse rounded-2xl bg-secondary" />
+      </div>
+    );
   }
 
   if (!companyContext) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Usage unavailable</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+      <Card className="warm-shadow">
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
           Organization data is still syncing. Refresh in a few seconds.
         </CardContent>
       </Card>
@@ -41,11 +44,8 @@ export function BillingUsageCards({
 
   if (!usage) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Usage unavailable</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+      <Card className="warm-shadow">
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
           You do not currently have active workspace membership in this organization.
         </CardContent>
       </Card>
@@ -58,12 +58,14 @@ export function BillingUsageCards({
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <UsageCard
+        icon={Users}
         label="Seats"
         used={seatsUsed}
         limit={seatLimit}
         helper={`${usage.invitedMemberCount} invited pending`}
       />
       <UsageCard
+        icon={BriefcaseBusiness}
         label="Active jobs"
         used={jobsUsed}
         limit={jobLimit}
@@ -74,11 +76,13 @@ export function BillingUsageCards({
 }
 
 function UsageCard({
+  icon: Icon,
   label,
   used,
   limit,
   helper,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   used: number;
   limit: number;
@@ -86,27 +90,46 @@ function UsageCard({
 }) {
   const ratio = Math.min(100, Math.round((used / Math.max(1, limit)) * 100));
   const overLimit = used > limit;
+  const nearLimit = ratio >= 80 && !overLimit;
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">{label}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <p className="text-sm">
-          {used} / {limit} used
-        </p>
-        <div className="h-2 rounded-full bg-muted">
+    <Card className="warm-shadow">
+      <CardContent className="space-y-3 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`flex size-8 items-center justify-center rounded-lg ${overLimit ? "bg-amber-accent/10 text-amber-accent" : "bg-jade/10 text-jade"}`}>
+              <Icon className="size-4" />
+            </div>
+            <span className="text-sm font-medium">{label}</span>
+          </div>
+          <span className="font-[family-name:var(--font-bricolage)] text-lg font-bold">
+            {used}
+            <span className="text-muted-foreground">/{limit}</span>
+          </span>
+        </div>
+
+        <div className="h-2 overflow-hidden rounded-full bg-secondary">
           <div
-            className={`h-2 rounded-full ${overLimit ? "bg-amber-600" : "bg-emerald-600"}`}
+            className={`h-2 rounded-full transition-all ${
+              overLimit
+                ? "bg-amber-accent"
+                : nearLimit
+                  ? "bg-amber-accent"
+                  : "bg-jade"
+            }`}
             style={{ width: `${ratio}%` }}
           />
         </div>
-        <p className="text-xs text-muted-foreground">{helper}</p>
-        {overLimit ? (
-          <p className="text-xs text-amber-600">
-            Over plan limit. Upgrade or reduce usage.
-          </p>
-        ) : null}
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{helper}</p>
+          {overLimit && (
+            <p className="flex items-center gap-1 text-xs font-medium text-amber-accent">
+              <AlertTriangle className="size-3" />
+              Over limit
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

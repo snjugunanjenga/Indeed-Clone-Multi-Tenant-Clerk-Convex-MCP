@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, FileText, Plus, Save, Trash2 } from "lucide-react";
 
 type ProfileFormValues = {
   headline: string;
@@ -66,215 +67,278 @@ export default function ProfilePage() {
   }, [form, profileBundle]);
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Keep your profile up to date for better job matches.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              className="space-y-3"
-              onSubmit={form.handleSubmit(async (values) => {
-              setStatusText(null);
-              const years = values.yearsExperience?.trim() ?? "";
-              const skillsValue = values.skills ?? "";
-              if (years && Number.isNaN(Number(years))) {
-                setStatusText("Years of experience must be a number.");
-                return;
-              }
+    <section className="animate-fade-in space-y-6">
+      {/* Page header */}
+      <div>
+        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+          Your profile
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A complete profile helps companies understand your background when you apply.
+        </p>
+      </div>
 
-              try {
-                await upsertMyProfile({
-                  headline: values.headline?.trim() || undefined,
-                  bio: values.bio?.trim() || undefined,
-                  location: values.location?.trim() || undefined,
-                  yearsExperience: years ? Number(years) : undefined,
-                  skills: skillsValue
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean),
-                  openToWork: values.openToWork ?? true,
-                });
-                setStatusText("Profile saved.");
-              } catch (error) {
-                const message = error instanceof Error ? error.message : "Could not save profile.";
-                setStatusText(message);
-              }
-              })}
-            >
-              <FormField
-                control={form.control}
-                name="headline"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Headline</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        {/* Profile form */}
+        <Card className="warm-shadow">
+          <CardHeader>
+            <CardTitle className="font-[family-name:var(--font-bricolage)] text-xl tracking-tight">
+              About you
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                className="space-y-4"
+                onSubmit={form.handleSubmit(async (values) => {
+                  setStatusText(null);
+                  const years = values.yearsExperience?.trim() ?? "";
+                  const skillsValue = values.skills ?? "";
+                  if (years && Number.isNaN(Number(years))) {
+                    setStatusText("Years of experience must be a number.");
+                    return;
+                  }
 
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea rows={5} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid gap-3 md:grid-cols-2">
+                  try {
+                    await upsertMyProfile({
+                      headline: values.headline?.trim() || undefined,
+                      bio: values.bio?.trim() || undefined,
+                      location: values.location?.trim() || undefined,
+                      yearsExperience: years ? Number(years) : undefined,
+                      skills: skillsValue
+                        .split(",")
+                        .map((skill) => skill.trim())
+                        .filter(Boolean),
+                      openToWork: values.openToWork ?? true,
+                    });
+                    setStatusText("Profile saved successfully.");
+                  } catch (error) {
+                    const message = error instanceof Error ? error.message : "Could not save profile.";
+                    setStatusText(message);
+                  }
+                })}
+              >
                 <FormField
                   control={form.control}
-                  name="location"
+                  name="headline"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>Headline</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input placeholder="e.g. Senior Frontend Engineer" {...field} />
+                      </FormControl>
+                      <FormDescription>A short title that describes what you do.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="bio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio</FormLabel>
+                      <FormControl>
+                        <Textarea rows={5} placeholder="Tell companies about your background and what you're looking for..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. San Francisco, CA" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="yearsExperience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Years of experience</FormLabel>
+                        <FormControl>
+                          <Input inputMode="numeric" placeholder="e.g. 5" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="yearsExperience"
+                  name="skills"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Years of experience</FormLabel>
+                      <FormLabel>Skills</FormLabel>
                       <FormControl>
-                        <Input inputMode="numeric" {...field} />
+                        <Input placeholder="React, TypeScript, Product design" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        Separate skills with commas.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="skills"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Skills (comma-separated)</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Example: React, TypeScript, Product design
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="openToWork"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3 rounded-xl border border-border bg-secondary/30 p-4">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
+                      </FormControl>
+                      <div>
+                        <FormLabel>Open to work</FormLabel>
+                        <FormDescription>Let recruiters know you&apos;re available.</FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="openToWork"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-2 rounded-md border p-3">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
-                    </FormControl>
-                    <div>
-                      <FormLabel>Open to work</FormLabel>
-                      <FormDescription>Show recruiters that you are available.</FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">Save profile</Button>
-              {statusText && <p className="text-xs text-muted-foreground">{statusText}</p>}
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumes</CardTitle>
-          <CardDescription>Add links to your resume files for fast applying.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="resumeTitle">Resume title</Label>
-            <Input
-              id="resumeTitle"
-              value={resumeTitle}
-              onChange={(event) => setResumeTitle(event.target.value)}
-              placeholder="Primary resume"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="resumeFileName">File name</Label>
-            <Input
-              id="resumeFileName"
-              value={resumeFileName}
-              onChange={(event) => setResumeFileName(event.target.value)}
-              placeholder="resume.pdf"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="resumeFileUrl">File URL</Label>
-            <Input
-              id="resumeFileUrl"
-              value={resumeFileUrl}
-              onChange={(event) => setResumeFileUrl(event.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              if (!resumeTitle || !resumeFileName || !resumeFileUrl) return;
-              await saveResume({
-                title: resumeTitle,
-                fileName: resumeFileName,
-                fileUrl: resumeFileUrl,
-                isDefault: (profileBundle?.resumes.length ?? 0) === 0,
-              });
-              setResumeTitle("");
-              setResumeFileName("");
-              setResumeFileUrl("");
-            }}
-          >
-            Add resume
-          </Button>
-          <div className="space-y-2">
-            {(profileBundle?.resumes ?? []).map((resume) => (
-              <div key={resume._id} className="rounded-md border p-3">
-                <p className="text-sm font-medium">{resume.title}</p>
-                <p className="text-xs text-muted-foreground">{resume.fileName}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <Button asChild size="sm" variant="outline">
-                    <a href={resume.fileUrl} target="_blank" rel="noreferrer">
-                      Open
-                    </a>
-                  </Button>
+                <div className="flex items-center gap-3 pt-2">
                   <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void deleteResume({ resumeId: resume._id })}
+                    type="submit"
+                    className="rounded-full bg-terracotta text-white hover:bg-terracotta/90"
                   >
-                    Delete
+                    <Save className="mr-1.5 size-3.5" />
+                    Save profile
                   </Button>
+                  {statusText && (
+                    <p className={`text-xs ${statusText.includes("success") ? "text-jade" : "text-muted-foreground"}`}>
+                      {statusText}
+                    </p>
+                  )}
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        {/* Resumes */}
+        <div className="space-y-6">
+          <Card className="warm-shadow">
+            <CardHeader>
+              <CardTitle className="font-[family-name:var(--font-bricolage)] text-xl tracking-tight">
+                Resumes
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Link your resume files so they&apos;re ready when you apply.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="resumeTitle" className="text-xs text-muted-foreground">
+                    Resume title
+                  </Label>
+                  <Input
+                    id="resumeTitle"
+                    value={resumeTitle}
+                    onChange={(event) => setResumeTitle(event.target.value)}
+                    placeholder="e.g. Primary resume"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="resumeFileName" className="text-xs text-muted-foreground">
+                    File name
+                  </Label>
+                  <Input
+                    id="resumeFileName"
+                    value={resumeFileName}
+                    onChange={(event) => setResumeFileName(event.target.value)}
+                    placeholder="resume.pdf"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="resumeFileUrl" className="text-xs text-muted-foreground">
+                    File URL
+                  </Label>
+                  <Input
+                    id="resumeFileUrl"
+                    value={resumeFileUrl}
+                    onChange={(event) => setResumeFileUrl(event.target.value)}
+                    placeholder="https://..."
+                    className="mt-1"
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <Button
+                variant="outline"
+                className="w-full rounded-xl"
+                onClick={async () => {
+                  if (!resumeTitle || !resumeFileName || !resumeFileUrl) return;
+                  await saveResume({
+                    title: resumeTitle,
+                    fileName: resumeFileName,
+                    fileUrl: resumeFileUrl,
+                    isDefault: (profileBundle?.resumes.length ?? 0) === 0,
+                  });
+                  setResumeTitle("");
+                  setResumeFileName("");
+                  setResumeFileUrl("");
+                }}
+              >
+                <Plus className="mr-1.5 size-3.5" />
+                Add resume
+              </Button>
+
+              {/* Existing resumes */}
+              {(profileBundle?.resumes ?? []).length > 0 && (
+                <div className="space-y-2 border-t border-border pt-4">
+                  {(profileBundle?.resumes ?? []).map((resume) => (
+                    <div
+                      key={resume._id}
+                      className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-3"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 items-center justify-center rounded-lg bg-terracotta/10 text-terracotta">
+                          <FileText className="size-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{resume.title}</p>
+                          <p className="text-xs text-muted-foreground">{resume.fileName}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button asChild size="sm" variant="ghost" className="size-8 rounded-full p-0">
+                          <a href={resume.fileUrl} target="_blank" rel="noreferrer" aria-label="Open resume">
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="size-8 rounded-full p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => void deleteResume({ resumeId: resume._id })}
+                          aria-label="Delete resume"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </section>
   );
 }

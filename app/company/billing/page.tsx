@@ -1,15 +1,24 @@
 import { PricingTable, Protect } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BillingUsageCards } from "../_components/billing-usage-cards";
+import { CheckCircle2, CreditCard, Lock, XCircle } from "lucide-react";
 
 export default async function CompanyBillingPage() {
   const { has, orgId } = await auth();
   if (!orgId) {
     return (
-      <section className="rounded-lg border p-4 text-sm text-muted-foreground">
-        Select or create an organization first, then return to billing.
-      </section>
+      <Card className="warm-shadow">
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <CreditCard className="size-5 text-muted-foreground" />
+          </div>
+          <p className="font-medium">Select an organization first</p>
+          <p className="text-sm text-muted-foreground">
+            Use the organization switcher above, then return to billing.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -22,51 +31,83 @@ export default async function CompanyBillingPage() {
   const jobLimit = currentPlan === "growth" ? 25 : currentPlan === "starter" ? 5 : 1;
 
   return (
-    <section className="space-y-6">
-      <header className="space-y-2">
-        <h2 className="text-2xl font-semibold">Billing</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          Billing is organization-based. Access is enforced with server-side `has()` checks and
-          UI `&lt;Protect&gt;` guards.
+    <section className="animate-fade-in space-y-8">
+      {/* Page header */}
+      <div>
+        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+          Billing & plan
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage your organization&apos;s plan, usage limits, and team access.
         </p>
-      </header>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <AccessRow label={`Current plan: ${currentPlan}`} enabled />
-        <AccessRow label={`Seat limit: ${seatLimit}`} enabled />
-        <AccessRow label={`Active job limit: ${jobLimit}`} enabled />
-        <AccessRow label="Plan: starter" enabled={hasStarterPlan} />
-        <AccessRow label="Plan: growth" enabled={hasGrowthPlan} />
-        <AccessRow label="Feature: advanced_filters" enabled={hasAdvancedFilters} />
-        <AccessRow
-          label="Permission: org:team_management:invite"
-          enabled={hasInvitePermission}
-        />
       </div>
 
-      <Card>
+      {/* Current plan summary */}
+      <Card className="warm-shadow border-terracotta/20 bg-terracotta/5">
+        <CardContent className="flex items-center gap-4 p-5">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-terracotta/10 text-terracotta">
+            <CreditCard className="size-6" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Current plan</p>
+            <p className="font-[family-name:var(--font-bricolage)] text-2xl font-bold capitalize tracking-tight">
+              {currentPlan}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {seatLimit} seat{seatLimit > 1 ? "s" : ""} · {jobLimit} active job{jobLimit > 1 ? "s" : ""}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Access checks */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <AccessRow label="Starter plan" enabled={hasStarterPlan} />
+        <AccessRow label="Growth plan" enabled={hasGrowthPlan} />
+        <AccessRow label="Advanced filters" enabled={hasAdvancedFilters} />
+        <AccessRow label="Team invite permission" enabled={hasInvitePermission} />
+      </div>
+
+      {/* Usage */}
+      <Card className="warm-shadow">
         <CardHeader>
-          <CardTitle>Current usage</CardTitle>
-          <CardDescription>
-            Usage is read from Convex product data, while plan entitlements come from Clerk.
-          </CardDescription>
+          <CardTitle className="font-[family-name:var(--font-bricolage)] text-xl tracking-tight">
+            Current usage
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Real-time usage from your workspace, compared against plan limits.
+          </p>
         </CardHeader>
         <CardContent>
           <BillingUsageCards seatLimit={seatLimit} jobLimit={jobLimit} />
         </CardContent>
       </Card>
 
+      {/* Pricing table */}
       <Protect
         role="org:admin"
         fallback={
-          <div className="rounded-lg border p-4 text-sm">
-            Only organization admins can update billing.
-          </div>
+          <Card className="warm-shadow">
+            <CardContent className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
+              <Lock className="size-4" />
+              Only organization admins can change billing plans.
+            </CardContent>
+          </Card>
         }
       >
-        <div className="rounded-lg border p-4">
-          <PricingTable for="organization" />
-        </div>
+        <Card className="warm-shadow overflow-hidden">
+          <CardHeader>
+            <CardTitle className="font-[family-name:var(--font-bricolage)] text-xl tracking-tight">
+              Change plan
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Upgrade or downgrade your organization&apos;s subscription.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <PricingTable for="organization" />
+          </CardContent>
+        </Card>
       </Protect>
     </section>
   );
@@ -74,14 +115,16 @@ export default async function CompanyBillingPage() {
 
 function AccessRow({ label, enabled }: { label: string; enabled: boolean }) {
   return (
-    <div className="rounded-lg border p-4">
-      <p className="text-sm">{label}</p>
-      <p className="mt-2 text-sm">
-        Status:{" "}
-        <span className={enabled ? "text-green-600" : "text-amber-600"}>
-          {enabled ? "granted" : "not granted"}
-        </span>
-      </p>
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 warm-shadow">
+      {enabled ? (
+        <CheckCircle2 className="size-4 shrink-0 text-jade" />
+      ) : (
+        <XCircle className="size-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className="text-sm">{label}</span>
+      <span className={`ml-auto text-xs font-medium ${enabled ? "text-jade" : "text-muted-foreground"}`}>
+        {enabled ? "Active" : "Locked"}
+      </span>
     </div>
   );
 }

@@ -2,16 +2,25 @@ import Link from "next/link";
 import { Protect } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanySummaryCards } from "./_components/company-summary-cards";
+import { ArrowRight, BriefcaseBusiness, CreditCard, FileText, Lock, Shield, Sparkles, Users } from "lucide-react";
 
 export default async function CompanyDashboardPage() {
   const { has, orgId } = await auth();
   if (!orgId) {
     return (
-      <section className="rounded-lg border p-4 text-sm text-muted-foreground">
-        Select an organization to continue.
-      </section>
+      <Card className="warm-shadow">
+        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+            <Users className="size-5 text-muted-foreground" />
+          </div>
+          <p className="font-medium">Select an organization</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Use the organization switcher above to pick your company workspace.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -21,53 +30,87 @@ export default async function CompanyDashboardPage() {
   const canManageJobs = has({ role: "org:admin" }) || has({ role: "org:recruiter" });
 
   return (
-    <section className="space-y-6">
+    <section className="animate-fade-in space-y-8">
+      {/* Page header */}
+      <div>
+        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+          Company dashboard
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          An overview of your workspace, jobs, and team.
+        </p>
+      </div>
+
       <CompanySummaryCards orgId={orgId} />
 
+      {/* Feature status */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <FeatureCard
+          icon={Users}
           title="Team invites"
+          description="Invite members to your organization"
           enabled={canInviteTeam && canManageInvites}
-          description="Feature + permission check: org:team_management:invite"
         />
         <FeatureCard
+          icon={BriefcaseBusiness}
           title="Job posting"
+          description="Create and publish job listings"
           enabled={canPostMoreJobs}
-          description="Feature check: job_posting"
         />
         <FeatureCard
-          title="Job management actions"
+          icon={Shield}
+          title="Job management"
+          description="Edit, close, and reopen listings"
           enabled={canManageJobs}
-          description="Role check: org:admin or org:recruiter"
         />
       </div>
 
+      {/* Quick actions */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="warm-shadow">
           <CardHeader>
-            <CardTitle>Jobs</CardTitle>
-            <CardDescription>Create and manage active listings.</CardDescription>
+            <CardTitle className="flex items-center gap-2 font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+              <BriefcaseBusiness className="size-4 text-terracotta" />
+              Jobs
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Create and manage your active listings.
+            </p>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/company/jobs">View jobs</Link>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/company/jobs">
+                View all jobs
+                <ArrowRight className="ml-1 size-3.5" />
+              </Link>
             </Button>
             <Protect permission="org:job_posting:manage" fallback={null}>
-              <Button asChild size="sm">
-                <Link href="/company/jobs/new">Post new job</Link>
+              <Button asChild size="sm" className="rounded-full bg-terracotta text-white hover:bg-terracotta/90">
+                <Link href="/company/jobs/new">
+                  <Sparkles className="mr-1 size-3.5" />
+                  Post new job
+                </Link>
               </Button>
             </Protect>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="warm-shadow">
           <CardHeader>
-            <CardTitle>Applications</CardTitle>
-            <CardDescription>Review candidates and make decisions.</CardDescription>
+            <CardTitle className="flex items-center gap-2 font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+              <FileText className="size-4 text-jade" />
+              Applications
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Review candidates and make hiring decisions.
+            </p>
           </CardHeader>
-          <CardContent className="flex gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/company/applications">Open application review</Link>
+          <CardContent>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/company/applications">
+                Review applications
+                <ArrowRight className="ml-1 size-3.5" />
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -76,19 +119,30 @@ export default async function CompanyDashboardPage() {
       <Protect
         role="org:admin"
         fallback={
-          <p className="rounded-lg border p-4 text-sm">
-            Only organization admins can manage billing.
-          </p>
+          <Card className="warm-shadow">
+            <CardContent className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
+              <Lock className="size-4" />
+              Only organization admins can manage billing.
+            </CardContent>
+          </Card>
         }
       >
-        <Card>
+        <Card className="warm-shadow">
           <CardHeader>
-            <CardTitle>Billing controls</CardTitle>
-            <CardDescription>Upgrade plans and manage workspace limits.</CardDescription>
+            <CardTitle className="flex items-center gap-2 font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+              <CreditCard className="size-4 text-amber-accent" />
+              Billing
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Upgrade your plan and manage workspace limits.
+            </p>
           </CardHeader>
           <CardContent>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/company/billing">Open billing</Link>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/company/billing">
+                Open billing
+                <ArrowRight className="ml-1 size-3.5" />
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -98,24 +152,30 @@ export default async function CompanyDashboardPage() {
 }
 
 function FeatureCard({
+  icon: Icon,
   title,
   description,
   enabled,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   enabled: boolean;
 }) {
   return (
-    <article className="rounded-lg border p-4">
-      <h3 className="font-medium">{title}</h3>
-      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{description}</p>
-      <p className="mt-3 text-sm">
-        Status: <span className={enabled ? "text-green-600" : "text-amber-600"}>{enabled ? "enabled" : "locked"}</span>
-      </p>
-      {!enabled && (
-        <p className="mt-1 text-xs text-slate-500">Upgrade plan or adjust permissions to unlock.</p>
-      )}
-    </article>
+    <Card className="warm-shadow">
+      <CardContent className="flex items-start gap-3 p-4">
+        <div className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${enabled ? "bg-jade/10 text-jade" : "bg-secondary text-muted-foreground"}`}>
+          <Icon className="size-4" />
+        </div>
+        <div>
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className={`mt-1.5 text-xs font-medium ${enabled ? "text-jade" : "text-amber-accent"}`}>
+            {enabled ? "Enabled" : "Locked — upgrade to unlock"}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -5,13 +5,14 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Briefcase, Heart, MapPin, Search, X } from "lucide-react";
 
 function formatSalary(min?: number, max?: number, currency?: string) {
   if (min === undefined && max === undefined) return "Salary not listed";
   const unit = currency ?? "USD";
-  if (min !== undefined && max !== undefined) return `${min.toLocaleString()} - ${max.toLocaleString()} ${unit}`;
+  if (min !== undefined && max !== undefined) return `${min.toLocaleString()} – ${max.toLocaleString()} ${unit}`;
   return `${(max ?? min ?? 0).toLocaleString()} ${unit}`;
 }
 
@@ -22,54 +23,82 @@ export default function FavoritesPage() {
   const [removingJobId, setRemovingJobId] = useState<string | null>(null);
 
   return (
-    <section className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved jobs</CardTitle>
-          <CardDescription>Keep track of opportunities you want to revisit.</CardDescription>
-        </CardHeader>
-      </Card>
-      {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
+    <section className="animate-fade-in space-y-6">
+      {/* Page header */}
+      <div>
+        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+          Saved jobs
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Jobs you&apos;ve bookmarked for later — come back anytime.
+        </p>
+      </div>
 
-      {favorites === undefined && <p className="text-sm text-muted-foreground">Loading saved jobs...</p>}
+      {statusText && (
+        <p className="text-xs text-muted-foreground">{statusText}</p>
+      )}
+
+      {/* Loading */}
+      {favorites === undefined && (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-secondary" />
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
       {favorites?.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            You have no favorites yet. Save jobs from the jobs page.
+        <Card className="warm-shadow">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-terracotta/10">
+              <Heart className="size-5 text-terracotta" />
+            </div>
+            <p className="font-medium">Nothing saved yet</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Browse jobs and tap the bookmark icon to save roles you want to come back to.
+            </p>
+            <Button asChild className="mt-2 rounded-full bg-terracotta text-white hover:bg-terracotta/90">
+              <Link href="/jobs">
+                <Search className="mr-1.5 size-3.5" />
+                Browse jobs
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid gap-3">
-        {favorites?.map((favorite) => {
+      {/* Favorites list */}
+      <div className="space-y-3">
+        {favorites?.map((favorite, index) => {
           const job = favorite.job;
-          if (!job) {
-            return null;
-          }
+          if (!job) return null;
           return (
-            <Card key={favorite._id}>
+            <Card
+              key={favorite._id}
+              className="animate-slide-up warm-shadow transition-all hover:warm-shadow-md"
+              style={{ animationDelay: `${index * 0.04}s` }}
+            >
               <CardHeader className="pb-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <CardTitle className="text-lg">
-                    <Link href={`/jobs/${job._id}`} className="hover:underline">
-                      {job.title}
-                    </Link>
-                  </CardTitle>
-                  <Badge variant="secondary">{job.workplaceType.replace("_", "-")}</Badge>
-                </div>
-                <CardDescription>
-                  {job.companyName} • {job.location}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">{formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}</p>
-                <div className="flex items-center gap-2">
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/jobs/${job._id}`}>View job</Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+                      <Link
+                        href={`/jobs/${job._id}`}
+                        className="transition-colors hover:text-terracotta"
+                      >
+                        {job.title}
+                      </Link>
+                    </CardTitle>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {job.companyName}
+                      <span className="text-border">·</span>
+                      <MapPin className="size-3" />
+                      {job.location}
+                    </p>
+                  </div>
+                  <button
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     disabled={removingJobId === job._id}
                     onClick={async () => {
                       setStatusText(null);
@@ -85,10 +114,32 @@ export default function FavoritesPage() {
                         setRemovingJobId(null);
                       }
                     }}
+                    aria-label="Remove from saved"
                   >
-                    {removingJobId === job._id ? "Removing..." : "Remove"}
-                  </Button>
+                    <X className="size-4" />
+                  </button>
                 </div>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="gap-1 rounded-full text-xs">
+                    <Briefcase className="size-3" />
+                    {job.workplaceType.replace("_", " ")}
+                  </Badge>
+                  <span className="text-sm font-medium">
+                    {formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
+                  </span>
+                </div>
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-full bg-terracotta text-white hover:bg-terracotta/90"
+                >
+                  <Link href={`/jobs/${job._id}`}>
+                    View job
+                    <ArrowRight className="ml-1 size-3.5" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           );

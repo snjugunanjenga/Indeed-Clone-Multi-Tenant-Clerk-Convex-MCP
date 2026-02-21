@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BriefcaseBusiness, Eye, EyeOff, MapPin, Plus, RotateCcw, ToggleLeft, ToggleRight, X } from "lucide-react";
 
 export default function CompanyJobsPage() {
   const { orgId } = useAuth();
@@ -32,90 +33,151 @@ export default function CompanyJobsPage() {
     companyContext?.role === "admin" || companyContext?.role === "recruiter";
 
   if (!orgId) {
-    return <p className="text-sm text-muted-foreground">Select an organization to continue.</p>;
+    return (
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Select an organization to continue.
+        </CardContent>
+      </Card>
+    );
   }
 
   if (companyContext === undefined || jobs === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading company jobs...</p>;
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-32 animate-pulse rounded-2xl bg-secondary" />
+        ))}
+      </div>
+    );
   }
 
   if (!companyContext) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Company workspace unavailable</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Your organization has not synced into Convex yet. Wait a few seconds and refresh.
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Your organization data is still syncing. Refresh in a few seconds.
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">Company jobs</h2>
+    <section className="animate-fade-in space-y-6">
+      {/* Page header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+            Job listings
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage your company&apos;s open and closed positions.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIncludeClosed((value) => !value)}
+            className="rounded-full"
+            onClick={() => setIncludeClosed((v) => !v)}
           >
+            {includeClosed ? <EyeOff className="mr-1.5 size-3.5" /> : <Eye className="mr-1.5 size-3.5" />}
             {includeClosed ? "Hide closed" : "Show closed"}
           </Button>
-          {canManage ? (
-            <Button asChild size="sm">
-              <Link href="/company/jobs/new">New listing</Link>
+          {canManage && (
+            <Button asChild size="sm" className="rounded-full bg-terracotta text-white hover:bg-terracotta/90">
+              <Link href="/company/jobs/new">
+                <Plus className="mr-1.5 size-3.5" />
+                New listing
+              </Link>
             </Button>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
+      {statusText && <p className="text-xs text-muted-foreground">{statusText}</p>}
 
-      {jobs.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-sm text-muted-foreground">
-            No job listings found.
+      {/* Empty state */}
+      {jobs.length === 0 && (
+        <Card className="warm-shadow">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-terracotta/10">
+              <BriefcaseBusiness className="size-5 text-terracotta" />
+            </div>
+            <p className="font-medium">No job listings yet</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Post your first job to start receiving applications from candidates.
+            </p>
+            {canManage && (
+              <Button asChild className="mt-2 rounded-full bg-terracotta text-white hover:bg-terracotta/90">
+                <Link href="/company/jobs/new">
+                  <Plus className="mr-1.5 size-3.5" />
+                  Post your first job
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
-      ) : null}
+      )}
 
-      <div className="grid gap-3">
-        {jobs.map((job) => (
-          <Card key={job._id}>
-            <CardHeader className="space-y-2">
+      {/* Job list */}
+      <div className="space-y-3">
+        {jobs.map((job, index) => (
+          <Card
+            key={job._id}
+            className="animate-slide-up warm-shadow transition-all hover:warm-shadow-md"
+            style={{ animationDelay: `${index * 0.04}s` }}
+          >
+            <CardHeader className="pb-2">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <CardTitle className="text-base">{job.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {job.location} · {job.workplaceType.replace("_", " ")} ·{" "}
+                  <CardTitle className="font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+                    {job.title}
+                  </CardTitle>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="size-3" />
+                    {job.location}
+                    <span className="text-border">·</span>
+                    {job.workplaceType.replace("_", " ")}
+                    <span className="text-border">·</span>
                     {job.employmentType.replace("_", " ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {job.autoCloseOnAccept ? (
-                    <Badge variant="outline">Auto-close on accept</Badge>
-                  ) : null}
-                  <Badge variant={job.isActive ? "secondary" : "outline"}>
+                  {job.autoCloseOnAccept && (
+                    <Badge variant="outline" className="rounded-full text-xs">
+                      Auto-close
+                    </Badge>
+                  )}
+                  <Badge
+                    variant="outline"
+                    className={`rounded-full text-xs ${
+                      job.isActive
+                        ? "border-jade/20 bg-jade/10 text-jade"
+                        : "text-muted-foreground"
+                    }`}
+                  >
                     {job.isActive ? "Active" : "Closed"}
                   </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Applications: {job.applicationCount} · Updated {formatDate(job.updatedAt)}
-              </p>
-              <p className="text-sm">{formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}</p>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span>{job.applicationCount} application{job.applicationCount !== 1 ? "s" : ""}</span>
+                <span className="text-border">·</span>
+                <span>Updated {new Date(job.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                <span className="text-border">·</span>
+                <span className="font-medium text-foreground">{formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}</span>
+              </div>
 
               {canManage ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                   {job.isActive ? (
                     <Button
                       size="sm"
                       variant="outline"
+                      className="rounded-full text-xs"
                       disabled={mutatingJobId === job._id}
                       onClick={async () => {
                         setStatusText(null);
@@ -127,20 +189,20 @@ export default function CompanyJobsPage() {
                           });
                           setStatusText("Job listing closed.");
                         } catch (error) {
-                          setStatusText(
-                            error instanceof Error ? error.message : "Could not close job listing.",
-                          );
+                          setStatusText(error instanceof Error ? error.message : "Could not close job listing.");
                         } finally {
                           setMutatingJobId(null);
                         }
                       }}
                     >
+                      <X className="mr-1 size-3" />
                       Close listing
                     </Button>
                   ) : (
                     <Button
                       size="sm"
                       variant="outline"
+                      className="rounded-full text-xs"
                       disabled={mutatingJobId === job._id}
                       onClick={async () => {
                         setStatusText(null);
@@ -153,23 +215,23 @@ export default function CompanyJobsPage() {
                           });
                           setStatusText("Job listing reopened.");
                         } catch (error) {
-                          setStatusText(
-                            error instanceof Error ? error.message : "Could not reopen job listing.",
-                          );
+                          setStatusText(error instanceof Error ? error.message : "Could not reopen job listing.");
                         } finally {
                           setMutatingJobId(null);
                         }
                       }}
                     >
-                      Reopen listing
+                      <RotateCcw className="mr-1 size-3" />
+                      Reopen
                     </Button>
                   )}
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={`/company/jobs/${job._id}/edit`}>Edit listing</Link>
+                  <Button asChild size="sm" variant="outline" className="rounded-full text-xs">
+                    <Link href={`/company/jobs/${job._id}/edit`}>Edit</Link>
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
+                    className="rounded-full text-xs text-muted-foreground"
                     disabled={mutatingJobId === job._id}
                     onClick={async () => {
                       setStatusText(null);
@@ -186,16 +248,13 @@ export default function CompanyJobsPage() {
                             : "Auto-close on accept disabled.",
                         );
                       } catch (error) {
-                        setStatusText(
-                          error instanceof Error
-                            ? error.message
-                            : "Could not update auto-close setting.",
-                        );
+                        setStatusText(error instanceof Error ? error.message : "Could not update auto-close setting.");
                       } finally {
                         setMutatingJobId(null);
                       }
                     }}
                   >
+                    {job.autoCloseOnAccept ? <ToggleRight className="mr-1 size-3" /> : <ToggleLeft className="mr-1 size-3" />}
                     {job.autoCloseOnAccept ? "Disable auto-close" : "Enable auto-close"}
                   </Button>
                 </div>
@@ -212,21 +271,9 @@ export default function CompanyJobsPage() {
   );
 }
 
-function formatSalary(
-  salaryMin?: number,
-  salaryMax?: number,
-  salaryCurrency?: string,
-) {
-  if (salaryMin === undefined && salaryMax === undefined) {
-    return "Salary not specified";
-  }
+function formatSalary(salaryMin?: number, salaryMax?: number, salaryCurrency?: string) {
+  if (salaryMin === undefined && salaryMax === undefined) return "Salary not specified";
   const currency = salaryCurrency ?? "USD";
-  if (salaryMin !== undefined && salaryMax !== undefined) {
-    return `${salaryMin.toLocaleString()} - ${salaryMax.toLocaleString()} ${currency}`;
-  }
+  if (salaryMin !== undefined && salaryMax !== undefined) return `${salaryMin.toLocaleString()} – ${salaryMax.toLocaleString()} ${currency}`;
   return `${(salaryMin ?? salaryMax ?? 0).toLocaleString()} ${currency}`;
-}
-
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toLocaleDateString();
 }

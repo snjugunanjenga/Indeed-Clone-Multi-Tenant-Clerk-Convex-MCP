@@ -46,6 +46,8 @@ function applyInMemoryFilters(
   jobs: Doc<"jobListings">[],
   filters: {
     location?: string;
+    workplaceType?: string;
+    employmentType?: string;
     minSalary?: number;
     tags?: string[];
   },
@@ -54,6 +56,14 @@ function applyInMemoryFilters(
   return jobs.filter((job) => {
     const matchesLocation = filters.location
       ? job.location.toLowerCase().includes(filters.location.toLowerCase())
+      : true;
+
+    const matchesWorkplaceType = filters.workplaceType
+      ? job.workplaceType === filters.workplaceType
+      : true;
+
+    const matchesEmploymentType = filters.employmentType
+      ? job.employmentType === filters.employmentType
       : true;
 
     const matchesSalary =
@@ -66,7 +76,13 @@ function applyInMemoryFilters(
         ? true
         : requiredTags.every((tag) => job.tags.includes(tag));
 
-    return matchesLocation && matchesSalary && matchesTags;
+    return (
+      matchesLocation &&
+      matchesWorkplaceType &&
+      matchesEmploymentType &&
+      matchesSalary &&
+      matchesTags
+    );
   });
 }
 
@@ -222,6 +238,8 @@ export const searchJobListings = query({
     );
     const locationFiltered = applyInMemoryFilters(uniqueRows, {
       location: args.location,
+      workplaceType: args.workplaceType,
+      employmentType: args.employmentType,
       minSalary: args.minSalary,
       tags: args.tags,
     });

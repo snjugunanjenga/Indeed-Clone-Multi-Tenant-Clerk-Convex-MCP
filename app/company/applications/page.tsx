@@ -7,9 +7,18 @@ import { api } from "@/convex/_generated/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, Clock, FileText, User, XCircle } from "lucide-react";
 
 type CompanyStatus = "submitted" | "in_review" | "accepted" | "rejected" | "withdrawn";
 type DecisionStatus = "in_review" | "accepted" | "rejected";
+
+const statusConfig: Record<string, { label: string; className: string }> = {
+  submitted: { label: "Submitted", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800" },
+  in_review: { label: "In review", className: "bg-amber-accent/10 text-amber-accent border-amber-accent/20" },
+  accepted: { label: "Accepted", className: "bg-jade/10 text-jade border-jade/20" },
+  rejected: { label: "Rejected", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  withdrawn: { label: "Withdrawn", className: "border-border text-muted-foreground" },
+};
 
 export default function CompanyApplicationsPage() {
   const { orgId } = useAuth();
@@ -37,32 +46,49 @@ export default function CompanyApplicationsPage() {
     companyContext?.role === "admin" || companyContext?.role === "recruiter";
 
   if (!orgId) {
-    return <p className="text-sm text-muted-foreground">Select an organization to continue.</p>;
+    return (
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Select an organization to continue.
+        </CardContent>
+      </Card>
+    );
   }
 
   if (companyContext === undefined || applications === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading applications...</p>;
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-32 animate-pulse rounded-2xl bg-secondary" />
+        ))}
+      </div>
+    );
   }
 
   if (!companyContext) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Company workspace unavailable</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Your organization has not synced into Convex yet. Wait a few seconds and refresh.
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Your organization data is still syncing. Refresh in a few seconds.
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">Applications</h2>
+    <section className="animate-fade-in space-y-6">
+      {/* Page header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+            Applications
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review candidates and make hiring decisions.
+          </p>
+        </div>
         <select
-          className="h-9 rounded-md border bg-background px-3 text-sm"
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as CompanyStatus | "all")}
         >
@@ -75,103 +101,131 @@ export default function CompanyApplicationsPage() {
         </select>
       </div>
 
-      {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
+      {statusText && <p className="text-xs text-muted-foreground">{statusText}</p>}
 
-      {applications.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-sm text-muted-foreground">
-            No applications found for this filter.
+      {/* Empty state */}
+      {applications.length === 0 && (
+        <Card className="warm-shadow">
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-secondary">
+              <FileText className="size-5 text-muted-foreground" />
+            </div>
+            <p className="font-medium">No applications found</p>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {statusFilter === "all"
+                ? "Applications will appear here once candidates apply to your jobs."
+                : "No applications match this filter. Try changing the status filter above."}
+            </p>
           </CardContent>
         </Card>
-      ) : null}
+      )}
 
+      {/* Application list */}
       <div className="space-y-3">
-        {applications.map((application) => (
-          <Card key={application._id}>
-            <CardHeader className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="text-base">
-                    {application.job?.title ?? "Unknown job"}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Applicant: {formatApplicant(application.applicant)}
-                  </p>
+        {applications.map((application, index) => {
+          const config = statusConfig[application.status] ?? statusConfig.submitted;
+          return (
+            <Card
+              key={application._id}
+              className="animate-slide-up warm-shadow transition-all hover:warm-shadow-md"
+              style={{ animationDelay: `${index * 0.04}s` }}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="font-[family-name:var(--font-bricolage)] text-lg tracking-tight">
+                      {application.job?.title ?? "Unknown job"}
+                    </CardTitle>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <User className="size-3" />
+                      {formatApplicant(application.applicant)}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`rounded-full text-xs ${config.className}`}
+                  >
+                    {config.label}
+                  </Badge>
                 </div>
-                <Badge variant={statusVariant(application.status)}>
-                  {application.status.replace("_", " ")}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {application.coverLetter ? (
-                <p className="text-sm text-muted-foreground line-clamp-3">{application.coverLetter}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">No cover letter provided.</p>
-              )}
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {application.coverLetter ? (
+                  <div className="rounded-xl bg-secondary/50 p-3">
+                    <p className="line-clamp-3 text-sm text-foreground/80">{application.coverLetter}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No cover letter provided.</p>
+                )}
 
-              {canDecide && application.status !== "withdrawn" ? (
-                <div className="flex flex-wrap gap-2">
-                  {(["in_review", "accepted", "rejected"] as DecisionStatus[]).map((nextStatus) => (
+                {canDecide && application.status !== "withdrawn" ? (
+                  <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                     <Button
-                      key={nextStatus}
                       size="sm"
                       variant="outline"
-                      disabled={
-                        mutatingApplicationId === application._id ||
-                        application.status === nextStatus
-                      }
-                      onClick={async () => {
-                        setStatusText(null);
-                        setMutatingApplicationId(application._id);
-                        try {
-                          await updateApplicationStatus({
-                            applicationId: application._id,
-                            status: nextStatus,
-                          });
-                          setStatusText(`Application moved to ${nextStatus.replace("_", " ")}.`);
-                        } catch (error) {
-                          setStatusText(
-                            error instanceof Error
-                              ? error.message
-                              : "Could not update application status.",
-                          );
-                        } finally {
-                          setMutatingApplicationId(null);
-                        }
-                      }}
+                      className="rounded-full text-xs"
+                      disabled={mutatingApplicationId === application._id || application.status === "in_review"}
+                      onClick={() => handleStatusUpdate(application._id, "in_review")}
                     >
-                      Mark {nextStatus.replace("_", " ")}
+                      <Clock className="mr-1 size-3" />
+                      In review
                     </Button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {canDecide
-                    ? "No actions available for withdrawn applications."
-                    : "Read-only access for your role."}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+                    <Button
+                      size="sm"
+                      className="rounded-full bg-jade text-white text-xs hover:bg-jade/90"
+                      disabled={mutatingApplicationId === application._id || application.status === "accepted"}
+                      onClick={() => handleStatusUpdate(application._id, "accepted")}
+                    >
+                      <CheckCircle2 className="mr-1 size-3" />
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full text-xs text-destructive hover:bg-destructive/10"
+                      disabled={mutatingApplicationId === application._id || application.status === "rejected"}
+                      onClick={() => handleStatusUpdate(application._id, "rejected")}
+                    >
+                      <XCircle className="mr-1 size-3" />
+                      Reject
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {canDecide
+                      ? "No actions available for withdrawn applications."
+                      : "Read-only access for your role."}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </section>
   );
+
+  async function handleStatusUpdate(applicationId: string, nextStatus: DecisionStatus) {
+    setStatusText(null);
+    setMutatingApplicationId(applicationId);
+    try {
+      await updateApplicationStatus({
+        applicationId: applicationId as Parameters<typeof updateApplicationStatus>[0]["applicationId"],
+        status: nextStatus,
+      });
+      setStatusText(`Application moved to ${nextStatus.replace("_", " ")}.`);
+    } catch (error) {
+      setStatusText(error instanceof Error ? error.message : "Could not update application status.");
+    } finally {
+      setMutatingApplicationId(null);
+    }
+  }
 }
 
 function formatApplicant(
   applicant: { firstName?: string; lastName?: string; email?: string } | null,
 ) {
-  if (!applicant) {
-    return "Unknown applicant";
-  }
+  if (!applicant) return "Unknown applicant";
   const fullName = `${applicant.firstName ?? ""} ${applicant.lastName ?? ""}`.trim();
   return fullName || applicant.email || "Unknown applicant";
-}
-
-function statusVariant(status: CompanyStatus): "default" | "secondary" | "outline" {
-  if (status === "accepted") return "default";
-  if (status === "in_review" || status === "submitted") return "secondary";
-  return "outline";
 }

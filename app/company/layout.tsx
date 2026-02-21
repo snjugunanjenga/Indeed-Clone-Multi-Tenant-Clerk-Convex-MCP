@@ -1,47 +1,92 @@
-import Link from "next/link";
-import { OrganizationSwitcher, Protect, UserButton } from "@clerk/nextjs";
+"use client";
 
-export default async function CompanyLayout({
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { OrganizationSwitcher, Protect, UserButton } from "@clerk/nextjs";
+import { BriefcaseBusiness, CreditCard, FileText, LayoutDashboard, Plus } from "lucide-react";
+import { SiteLogo } from "@/components/site-logo";
+
+const exactRoutes = new Set(["/company/jobs/new", "/company/billing"]);
+
+const navItems = [
+  { href: "/company", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/company/jobs", label: "Jobs", icon: BriefcaseBusiness },
+  { href: "/company/applications", label: "Applications", icon: FileText },
+];
+
+export default function CompanyLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const pathname = usePathname();
+
   return (
-    <main className="mx-auto min-h-screen w-full max-w-5xl px-6 py-10">
-      <header className="mb-8 flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Company workspace</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
-            Organization scoped dashboard and billing controls.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <OrganizationSwitcher hidePersonal />
-          <UserButton />
+    <main className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-lg">
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-6 px-6 py-2.5">
+          <SiteLogo />
+
+          <nav className="flex items-center gap-1 overflow-x-auto">
+            {navItems.map((item) => {
+              const isActive = item.exact
+                ? pathname === item.href
+                : (pathname === item.href || pathname.startsWith(item.href + "/")) &&
+                  !exactRoutes.has(pathname);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-3.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+
+            <Protect permission="org:job_posting:manage">
+              <Link
+                href="/company/jobs/new"
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  pathname === "/company/jobs/new"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <Plus className="size-3.5" />
+                Post job
+              </Link>
+            </Protect>
+
+            <Protect role="org:admin">
+              <Link
+                href="/company/billing"
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  pathname === "/company/billing"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <CreditCard className="size-3.5" />
+                Billing
+              </Link>
+            </Protect>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <OrganizationSwitcher hidePersonal />
+            <UserButton />
+          </div>
         </div>
       </header>
 
-      <nav className="mb-6 flex items-center gap-2">
-        <Link href="/company" className="rounded-md border px-3 py-2 text-sm">
-          Dashboard
-        </Link>
-        <Link href="/company/jobs" className="rounded-md border px-3 py-2 text-sm">
-          Jobs
-        </Link>
-        <Link href="/company/applications" className="rounded-md border px-3 py-2 text-sm">
-          Applications
-        </Link>
-        <Protect permission="org:job_posting:manage">
-          <Link href="/company/jobs/new" className="rounded-md border px-3 py-2 text-sm">
-            Post job
-          </Link>
-        </Protect>
-        <Protect role="org:admin">
-          <Link href="/company/billing" className="rounded-md border px-3 py-2 text-sm">
-            Billing
-          </Link>
-        </Protect>
-      </nav>
-
-      {children}
+      <div className="mx-auto w-full max-w-5xl px-6 py-8">
+        {children}
+      </div>
     </main>
   );
 }

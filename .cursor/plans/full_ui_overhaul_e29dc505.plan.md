@@ -4,25 +4,25 @@ overview: Redesign every UI surface of the Jobly app with a "Warm Professional" 
 todos:
   - id: phase1-foundation
     content: Rewrite globals.css with warm professional color palette, subtle grain texture, keyframe animations, and custom utility classes. Swap fonts in layout.tsx to Bricolage Grotesque + Figtree via next/font/google.
-    status: pending
+    status: completed
   - id: phase2-landing
     content: Full redesign of app/page.tsx -- clear two-path hero (job seekers vs employers), warm card compositions, staggered entrance animations, friendly copy. Preserve all Clerk auth buttons and navigation links.
-    status: pending
+    status: completed
   - id: phase3-auth
     content: Restyle sign-in and sign-up pages with warm atmospheric backgrounds, centered card treatment, and welcoming copy.
-    status: pending
+    status: completed
   - id: phase4-candidate
     content: Redesign candidate layout with sticky sidebar nav + active route indicators, and all 5 candidate pages with improved hierarchy, contextual empty states, and warm professional styling. Preserve all data flows.
-    status: pending
+    status: completed
   - id: phase5-company
     content: Redesign company layout with clear org-context header and role-aware nav, plus all 5 company pages and 2 shared components with guided UX, clearer action hierarchy, and warm professional styling. Preserve all Protect guards and permission checks.
-    status: pending
+    status: completed
   - id: phase6-pricing
     content: Restyle pricing page wrapper with friendly onboarding flow while preserving all Clerk components.
-    status: pending
+    status: completed
   - id: phase7-verify
     content: Run pnpm lint and pnpm build to confirm no functional regressions. Fix any linter errors introduced.
-    status: pending
+    status: completed
 isProject: false
 ---
 

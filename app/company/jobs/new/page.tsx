@@ -7,10 +7,11 @@ import { useMutation, useQuery } from "convex/react";
 import { useForm } from "react-hook-form";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -19,6 +20,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Send } from "lucide-react";
+import Link from "next/link";
 
 type JobFormValues = {
   title: string;
@@ -60,22 +63,27 @@ export default function NewCompanyJobPage() {
   });
 
   if (!orgId) {
-    return <p className="text-sm text-muted-foreground">Select an organization to continue.</p>;
+    return (
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Select an organization to continue.
+        </CardContent>
+      </Card>
+    );
   }
 
   if (companyContext === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading company workspace...</p>;
+    return (
+      <div className="h-64 animate-pulse rounded-2xl bg-secondary" />
+    );
   }
 
   if (!companyContext) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Company workspace unavailable</CardTitle>
-          <CardDescription>
-            Your organization has not synced yet. Wait a few seconds and refresh.
-          </CardDescription>
-        </CardHeader>
+      <Card className="warm-shadow">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
+          Your organization has not synced yet. Wait a few seconds and refresh.
+        </CardContent>
       </Card>
     );
   }
@@ -84,31 +92,43 @@ export default function NewCompanyJobPage() {
     companyContext.role === "admin" || companyContext.role === "recruiter";
   if (!canManage) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Read-only access</CardTitle>
-          <CardDescription>
+      <Card className="warm-shadow">
+        <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
+          <p className="font-medium">Read-only access</p>
+          <p className="text-sm text-muted-foreground">
             Only admins and recruiters can create job listings.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <section className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold">Post a new job</h2>
-        <p className="text-sm text-muted-foreground">
-          This listing will be visible in candidate search when published.
-        </p>
-      </header>
+    <section className="animate-fade-in space-y-6">
+      {/* Back link */}
+      <Link
+        href="/company/jobs"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to jobs
+      </Link>
 
-      <Card>
-        <CardContent className="pt-6">
+      {/* Page header */}
+      <div>
+        <h1 className="font-[family-name:var(--font-bricolage)] text-2xl font-bold tracking-tight">
+          Post a new job
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          This listing will be visible to candidates once published.
+        </p>
+      </div>
+
+      <Card className="warm-shadow">
+        <CardContent className="p-6">
           <Form {...form}>
             <form
-              className="space-y-4"
+              className="space-y-6"
               onSubmit={form.handleSubmit(async (values) => {
                 setStatusText(null);
                 const salaryMin = values.salaryMin.trim();
@@ -140,186 +160,214 @@ export default function NewCompanyJobPage() {
                 }
               })}
             >
-              <FormField
-                control={form.control}
-                name="title"
-                rules={{ required: "Title is required." }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Job title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Senior Product Designer" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                rules={{ required: "Description is required." }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea rows={8} placeholder="Role summary, requirements, responsibilities..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid gap-3 md:grid-cols-3">
+              {/* Basics */}
+              <div className="space-y-4">
+                <h3 className="font-[family-name:var(--font-bricolage)] text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Basics
+                </h3>
                 <FormField
                   control={form.control}
-                  name="location"
-                  rules={{ required: "Location is required." }}
+                  name="title"
+                  rules={{ required: "Title is required." }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel>Job title</FormLabel>
                       <FormControl>
-                        <Input placeholder="San Francisco, CA" {...field} />
+                        <Input placeholder="e.g. Senior Product Designer" {...field} />
                       </FormControl>
+                      <FormDescription>The role candidates will see in search.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
-                  name="employmentType"
+                  name="description"
+                  rules={{ required: "Description is required." }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Employment type</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <select
-                          className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                          {...field}
-                        >
-                          <option value="full_time">Full time</option>
-                          <option value="part_time">Part time</option>
-                          <option value="contract">Contract</option>
-                          <option value="internship">Internship</option>
-                          <option value="temporary">Temporary</option>
-                        </select>
+                        <Textarea rows={8} placeholder="Role summary, requirements, responsibilities..." {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="workplaceType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Workplace type</FormLabel>
-                      <FormControl>
-                        <select
-                          className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                          {...field}
-                        >
-                          <option value="on_site">On site</option>
-                          <option value="hybrid">Hybrid</option>
-                          <option value="remote">Remote</option>
-                        </select>
-                      </FormControl>
+                      <FormDescription>Describe the role, team, and what you&apos;re looking for.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
+              {/* Details */}
+              <div className="space-y-4 border-t border-border pt-6">
+                <h3 className="font-[family-name:var(--font-bricolage)] text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Details
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    rules={{ required: "Location is required." }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input placeholder="San Francisco, CA" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="employmentType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employment type</FormLabel>
+                        <FormControl>
+                          <select
+                            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                            {...field}
+                          >
+                            <option value="full_time">Full time</option>
+                            <option value="part_time">Part time</option>
+                            <option value="contract">Contract</option>
+                            <option value="internship">Internship</option>
+                            <option value="temporary">Temporary</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="workplaceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Workplace type</FormLabel>
+                        <FormControl>
+                          <select
+                            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                            {...field}
+                          >
+                            <option value="on_site">On site</option>
+                            <option value="hybrid">Hybrid</option>
+                            <option value="remote">Remote</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name="salaryMin"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Salary min</FormLabel>
+                        <FormControl>
+                          <Input inputMode="numeric" placeholder="120000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="salaryMax"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Salary max</FormLabel>
+                        <FormControl>
+                          <Input inputMode="numeric" placeholder="160000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="salaryCurrency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Currency</FormLabel>
+                        <FormControl>
+                          <Input placeholder="USD" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="salaryMin"
+                  name="tags"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salary min</FormLabel>
+                      <FormLabel>Tags</FormLabel>
                       <FormControl>
-                        <Input inputMode="numeric" placeholder="120000" {...field} />
+                        <Input placeholder="typescript, design, saas" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="salaryMax"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Salary max</FormLabel>
-                      <FormControl>
-                        <Input inputMode="numeric" placeholder="160000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="salaryCurrency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <FormControl>
-                        <Input placeholder="USD" {...field} />
-                      </FormControl>
+                      <FormDescription>Comma-separated tags to help candidates find this listing.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags (comma-separated)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="typescript, design, saas" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Settings */}
+              <div className="space-y-4 border-t border-border pt-6">
+                <h3 className="font-[family-name:var(--font-bricolage)] text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  Settings
+                </h3>
+                <FormField
+                  control={form.control}
+                  name="autoCloseOnAccept"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3 rounded-xl border border-border bg-secondary/30 p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => field.onChange(!!checked)}
+                        />
+                      </FormControl>
+                      <div>
+                        <FormLabel>Auto-close after first accepted applicant</FormLabel>
+                        <FormDescription>
+                          Best for single-hire roles. Leave off if you need multiple hires.
+                        </FormDescription>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="autoCloseOnAccept"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center gap-3 rounded-md border p-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(!!checked)}
-                      />
-                    </FormControl>
-                    <div className="space-y-1">
-                      <FormLabel>Auto-close listing after first accepted applicant</FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        Enable for single-hire roles. Leave off if you need multiple hires.
-                      </p>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex items-center gap-2">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? "Creating..." : "Create listing"}
+              {/* Submit */}
+              <div className="flex items-center gap-3 border-t border-border pt-6">
+                <Button
+                  type="submit"
+                  disabled={form.formState.isSubmitting}
+                  className="rounded-full bg-terracotta text-white hover:bg-terracotta/90"
+                >
+                  <Send className="mr-1.5 size-3.5" />
+                  {form.formState.isSubmitting ? "Creating..." : "Publish listing"}
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
+                  className="rounded-full"
                   onClick={() => router.push("/company/jobs")}
                 >
                   Cancel
                 </Button>
+                {statusText && <p className="text-xs text-muted-foreground">{statusText}</p>}
               </div>
-              {statusText ? <p className="text-xs text-muted-foreground">{statusText}</p> : null}
             </form>
           </Form>
         </CardContent>
